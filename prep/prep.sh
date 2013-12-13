@@ -2,7 +2,7 @@
 
 ## Usage
 # sh prep.sh PROJECTDIR RUNDIR CHRNUM RESULTSDIR
-# sh prep.sh derHippo run1-v0.0.42 11 /home/bst/student/lcollado/756final_data
+# sh prep.sh derHippo run1-v0.0.42 22 /home/bst/student/lcollado/756final_code/results
 
 # Directories
 PROJECTDIR=$1

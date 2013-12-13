@@ -52,9 +52,9 @@ if(test) {
 ## Test values
 if(test){
 	opt <- NULL
-	opt$project <- "derSnyder"
-	opt$dirResult <- "/home/bst/student/lcollado/756final_data"
-	opt$chrnum <- "11"
+	opt$project <- "derHippo"
+	opt$dirResult <- "/home/bst/student/lcollado/756final_code/results"
+	opt$chrnum <- "22"
 	opt$run <- "run1-v0.0.42"
 	opt$verbose <- NULL
 }
