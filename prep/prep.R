@@ -77,7 +77,7 @@ prepdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum))
 dir.create(prepdir, recursive=TRUE)
 
 codedir <- getwd()
-setwd(file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum)))
+setwd(prepdir)
 knit_bootstrap(file.path(codedir, "prep.Rmd"), output=file.path(prepdir, "prep.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=TRUE)
 
 

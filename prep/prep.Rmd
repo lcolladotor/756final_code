@@ -143,6 +143,7 @@ save(pairs, file=file.path(wdir, "pairs.Rdata"))
 ### Basic pairs exploration
 
 ```{r "pairsExplore", dev="CairoPNG"}
+dim(pairs)
 summary(pairs)
 with(pairs, pairs(~width1 + widthM + width2))
 with(pairs, pairs(~widthM + widthNoM))
