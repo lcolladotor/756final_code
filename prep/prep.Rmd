@@ -1,0 +1,265 @@
+Pre-processing report
+=====================
+
+# Setup
+
+## Libraries
+
+```{r "setup"}
+## Load libraries
+
+## Available from http://cran.r-project.org/web/packages/getopt/index.html
+# install.packages("getopt")
+library("getopt")
+
+## Available from http://cran.at.r-project.org/web/packages/knitrBootstrap/index.html
+# install.packages("knitrBootstrap")
+library("knitrBootstrap")
+
+## Available from http://cran.at.r-project.org/web/packages/reshape2/index.html
+# install.packages("reshape2")
+library("reshape2")
+
+## Available from http://www.bioconductor.org/packages/release/bioc/html/GenomicRanges.html
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("GenomicRanges")
+library("GenomicRanges")
+
+## Available from http://cran.at.r-project.org/web/packages/gee/index.html
+# install.packages("gee")
+library("gee")
+
+## Available from https://github.com/lcolladotor/derfinder
+## Read README.md for installation instructions
+# install.packages(devtools)
+# library(devtools)
+# install_github("derfinder", "lcolladotor")
+library("derfinder")
+
+## Available from http://www.bioconductor.org/packages/release/bioc/html/TxDb.Hsapiens.UCSC.hg19.knownGene.html
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("TxDb.Hsapiens.UCSC.hg19.knownGene")
+suppressMessages(library("TxDb.Hsapiens.UCSC.hg19.knownGene"))
+```
+
+## Directories
+
+```{r "directories"}
+## Chr
+chr <- paste0("chr", opt$chrnum)
+chrnum <- as.numeric(opt$chrnum)
+
+## Create dir to save files
+if(opt$verbose) message("Creating directories")
+wdir <- file.path(opt$dirResult, opt$project, chr) # working dir
+rawdir <- file.path(wdir, "raw")
+dir.create(wdir, recursive=TRUE)
+dir.create(rawdir, recursive=TRUE)
+
+## Shortcuts for previous directories
+pdir <- file.path("/dcs01/lieber/ajaffe/Brain/derRuns", opt$project) ## original project dir
+rdir <- file.path(pdir, "derAnalysis", opt$run) ## original project-run dir
+cdir <- file.path(rdir, chr) # original project-run-chr dir
+
+## Dirs:
+dirs <- c(wdir=wdir, rawdir=rawdir, pdir=pdir, rdir=rdir, cdir=cdir)
+save(dirs, file.path(wdir, "dirs.Rdata"))
+dirs
+```
+
+# Pre-processing
+
+## Copying original files
+
+```{r "copy"}
+## Copy raw files
+if(opt$verbose) message("Copying raw files")
+	
+## Project-specific files
+file.copy(file.path(rdir, "sampleDepths.Rdata"), rawdir)
+if(file.exists(file.path(rdir, "colsubset.Rdata"))) {
+	file.copy(file.path(rdir, "colsubset.Rdata"), rawdir)
+}
+
+## Chr-specific files
+file.copy(file.path(cdir, "annotation.Rdata"), rawdir)
+file.copy(file.path(cdir, "regions.Rdata"), rawdir)
+file.copy(file.path(cdir, "optionsStats.Rdata"), rawdir)
+```
+
+## Identify pairs
+
+```{r "pairs"}
+## Identify pairs
+if(opt$verbose) message("Identifying pairs")
+
+## Load original regions
+load(file.path(rawdir, "regions.Rdata"))
+## Keep only the region info
+regions <- regions$regions
+## Order by cluster (determine by optionsStats$maxRegionGap)
+regions <- regions[order(regions$cluster), ]
+
+## Assign chr length info
+data(hg19Ideogram, package = "biovizBase", envir = environment())
+seqlengths(regions) <- seqlengths(hg19Ideogram)[names(seqlengths(regions))]
+
+## Save regions
+save(regions, file=file.path(wdir, "regions.Rdata"))
+
+## Identify clusters that have 2 or more regions: aka, have at least a pair
+p.idx <- which(runLength(regions$cluster) > 1)
+## Number of pairs
+p.n <- sum(runLength(regions$cluster)[p.idx] - 1)
+if(p.n == 0) stop("No pairs found")
+
+regsub <- regions[ regions$cluster %in% p.idx]
+save(regsub, file=file.path(wdir, "regsub.Rdata"))
+
+na <- rep(NA, p.n)
+pairs <- data.frame(start1=na, end1=na, startM=na, endM=na, start2=na, end2=na, cluster=na)
+i <- 0
+for(j in unique(regsub$cluster)) {
+	if(opt$verbose) message(paste("Processing region cluster", j))
+	## Subset
+	cluster <- regsub[regsub$cluster == j]
+	## Order by chr position
+	cluster <- cluster[order(start(cluster))]
+	for(k in seq_len(length(cluster) - 1)) {
+		i <- i + 1
+		current <- cluster[k:(k+1)]
+		pairs[i, ] <- c(start1=start(current[1]), end1=end(current[1]), startM=end(current[1])+1, endM=start(current[2])-1, start2=start(current[2]), end2=end(current[2]), cluster=j)
+	}
+}
+pairs$width1 <- pairs$end1 - pairs$start1 + 1
+pairs$widthM <- pairs$endM - pairs$startM + 1
+pairs$width2 <- pairs$end2 - pairs$start2 + 1
+pairs$widthNoM <- pairs$width1 + pairs$width2
+
+## Save pairs info
+save(pairs, file=file.path(wdir, "pairs.Rdata"))
+```
+
+### Basic pairs exploration
+
+```{r "pairsExplore", dev="CairoPNG"}
+summary(pairs)
+with(pairs, pairs(~width1 + widthM + width2))
+with(pairs, pairs(~widthM + widthNoM))
+
+## How many pairs seem 'long' enough? In percent
+nrow(subset(pairs, width1 > 10 & width2 > 10)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 10 & widthM > 10 & width2 > 10)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 20 & width2 > 20)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 20 & widthM > 20 & width2 > 20)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 50 & width2 > 50)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 50 & widthM > 50 & width2 > 50)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 100 & width2 > 100)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 100 & widthM > 100 & width2 > 100)) / nrow(pairs) * 100
+```
+
+
+## Extract coverage data
+
+```{r "getCoverage"}
+## Load coverage data
+if(opt$verbose) message("Loading coverage data")
+load(file.path(pdir, "derCoverageInfo", "fullCov.Rdata"))
+cov <- fullCov[[chrnum]]
+rm(fullCov)
+
+## Apply colsubset if present
+if(opt$verbose) message("Extracting coverage per pair region")
+if(file.exists(file.path(rdir, "colsubset.Rdata"))) {
+	load(file.path(rdir, "colsubset.Rdata"))
+	cov <- cov[colsubset]
+} 
+
+## Load transform info and sample depth adjustments
+load(file.path(rawdir, "optionsStats.Rdata"))
+load(file.path(rawdir, "sampleDepths.Rdata"))
+names(sampleDepths) <- colnames(cov)
+
+groupInfo <- optionsStats$groupInfo
+names(groupInfo) <- colnames(cov)
+
+## Get pair region coverage
+# testing
+pairs <- pairs[c(574, 1)]
+covdata <- apply(pairs, 1, function(x) {
+	y <- log2(as.data.frame(cov[x["start1"]:x["end2"], ]) + optionsStats$scalefac)
+	y$base <- seq_len(nrow(y))
+	y$region=factor(rep(c("region1", "regionM", "region2"), x[c("width1", "widthM", "width2")]), levels=c("region1", "regionM", "region2"))
+	new <- melt(y, id.vars=c("base", "region"), variable.name="sample", value.name="coverage")
+	new$sampleDepth <- sampleDepths[new$sample]
+	new$group <- groupInfo[new$sample]
+	return(new)
+})
+names(covdata) <- pairs$cluster
+save(covdata, file=file.path(wdir, "covdata.Rdata"))
+```
+
+
+
+## Map to exons
+
+```{r "exons"}
+## Load genomic state object
+load('/dcs01/lieber/ajaffe/Brain/derRuns/derfinderExample/derGenomicState/GenomicState.Hsapiens.UCSC.hg19.knownGene.Rdata')
+
+## Identify exons from the chr
+exons <- GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome[ GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome$theRegion == "exon" & seqnames(GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome) == chr]
+save(exons, file=file.path(wdir, "exons.Rdata"))
+
+## Find overlaps to exons:
+ov <- findOverlaps(regsub, exons)
+```
+
+# Example
+
+```{r "plotCluster", message=FALSE, fig.width=20, fig.height=10, dev="CairoPNG"}
+## Explore cluster
+i <- 1 # 574 # which.max(pairs$widthNoM) ## can also try
+idx <- as.integer(names(covdata)[i])
+reg <- regsub[regsub$cluster == idx]
+p <- plotCluster(idx=which(start(reg) == pairs$start1[i]), regions=reg, annotation=reg, coverageInfo=cov, groupInfo=groupInfo, titleUse="qval", txdb=TxDb.Hsapiens.UCSC.hg19.knownGene, p.ideogram=NULL, maxExtend=300L, colsubset=NULL, forceLarge=FALSE)
+print(p)
+```
+
+
+```{r "gee"}
+## Explore data
+head(covdata[[i]])
+summary(covdata[[i]])
+
+## Attempt to fit a couple GEE models
+gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "independence")
+gfit.ind
+gfit.ex <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable")
+gfit.ex
+gfit.ar <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "AR-M", Mv=1)
+gfit.ar
+```
+
+
+# Reproducibility
+
+```{r reproducibility1, echo=FALSE}
+## Date the report was generated
+Sys.time()
+```
+
+Wallclock time spent generating the report.
+
+```{r reproducibility2, echo=FALSE}
+## Processing time in seconds
+totalTime <- diff(c(startTime, Sys.time()))
+round(totalTime, digits=3)
+```
+
+`R` session information.
+
+```{r reproducibility3, echo=FALSE}
+## Session info
+sessionInfo()
+```
