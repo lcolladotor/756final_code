@@ -1,14 +1,14 @@
 #!/bin/sh
 
 ## Usage
-# sh prep.sh derSnyder run1-v0.0.42 21 /home/bst/student/lcollado/756final_data
+# sh prep.sh derHippo run1-v0.0.42 21 /home/bst/student/lcollado/756final_data
 
 # Directories
 PROJECTDIR=$1
 RUNDIR=$2
 CHRNUM=$3
 RESULTSDIR=$4
-WDIR=`$PWD`
+WDIR=`echo $PWD`
 
 
 # Define variables
