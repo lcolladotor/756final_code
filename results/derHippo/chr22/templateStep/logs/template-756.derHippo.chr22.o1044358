@@ -1,0 +1,69 @@
+**** Job starts ****
+Fri Dec 13 02:35:12 EST 2013
+  |                                                                         |                                                                 |   0%  |                                                                         |....                                                             |   7%
+  ordinary text without R code
+
+  |                                                                         |.........                                                        |  13%
+label: setup
+  |                                                                         |.............                                                    |  20%
+  ordinary text without R code
+
+  |                                                                         |.................                                                |  27%
+label: directories
+  |                                                                         |......................                                           |  33%
+  ordinary text without R code
+
+  |                                                                         |..........................                                       |  40%
+label: chunkName
+  |                                                                         |..............................                                   |  47%
+  ordinary text without R code
+
+  |                                                                         |...................................                              |  53%
+label: anotherChunkWithFig (with options) 
+List of 1
+ $ dev: chr "CairoPNG"
+
+  |                                                                         |.......................................                          |  60%
+  ordinary text without R code
+
+  |                                                                         |...........................................                      |  67%
+label: reproducibility1 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |................................................                 |  73%
+  ordinary text without R code
+
+  |                                                                         |....................................................             |  80%
+label: reproducibility2 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |........................................................         |  87%
+  ordinary text without R code
+
+  |                                                                         |.............................................................    |  93%
+label: reproducibility3 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
+
+
+   user  system elapsed 
+  0.651   0.149   3.866 
+R version 3.0.2 Patched (2013-10-17 r64066)
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  base     
+
+other attached packages:
+[1] knitrBootstrap_0.9.0 getopt_1.20.0       
+
+loaded via a namespace (and not attached):
+[1] evaluate_0.5.1 formatR_0.10   knitr_1.5      markdown_0.6.3 stringr_0.6.2 
+[6] tools_3.0.2   
+**** Job ends ****
+Fri Dec 13 02:35:16 EST 2013
