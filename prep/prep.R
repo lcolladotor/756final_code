@@ -73,7 +73,7 @@ if (is.null(opt$verbose)) opt$verbose <- TRUE
 startTime <- Sys.time()
 	
 ## Create prep report
-prepdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum), "prep")
+prepdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum))
 dir.create(prepdir, recursive=TRUE)
 
 codedir <- getwd()

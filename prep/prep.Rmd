@@ -185,7 +185,7 @@ names(groupInfo) <- colnames(cov)
 
 ## Get pair region coverage
 # testing
-pairs <- pairs[1:6, ]
+# pairs <- pairs[1:6, ]
 covdata <- apply(pairs, 1, function(x) {
 	y <- log2(as.data.frame(cov[x["start1"]:x["end2"], ]) + optionsStats$scalefac)
 	y$base <- seq_len(nrow(y))
@@ -211,7 +211,7 @@ save(exons, file=file.path(wdir, "exons.Rdata"))
 ## Find overlaps to exons:
 ov <- findOverlaps(regsub, exons)
 ov.mat <- as.matrix(ov)
-save(ov, ov.mat, file=filepath(wdir, "ov.Rdata"))
+save(ov, ov.mat, file=file.path(wdir, "ov.Rdata"))
 ```
 
 # Example
