@@ -1,4 +1,4 @@
-Pre-processing report
+Template report
 =====================
 
 # Setup
@@ -88,14 +88,14 @@ Knew to Markdown? Check [this guide](http://www.rstudio.com/ide/docs/r_markdown)
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-13 02:35:15 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-13 02:56:54 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 0.313 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 0.258 secs
 </pre></div>
 </div></div>
 
