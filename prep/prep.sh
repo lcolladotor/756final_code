@@ -12,7 +12,7 @@ WDIR=`echo $PWD`
 
 
 # Define variables
-SHORT='756-prep'
+SHORT='prep-756'
 
 # Construct shell files
 sname="${SHORT}.${PROJECTDIR}.chr${CHRNUM}"
