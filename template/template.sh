@@ -3,9 +3,9 @@
 ## This script is for running on the cluster
 
 ## Usage:
-# sh prep.sh PROJECTDIR RUNDIR CHRNUM RESULTSDIR
+# sh template.sh PROJECTDIR RUNDIR CHRNUM RESULTSDIR
 ## Example:
-# sh prep.sh derHippo run1-v0.0.42 22 /home/bst/student/lcollado/756final_code/results
+# sh template.sh derHippo templateStep 22 /home/bst/student/lcollado/756final_code/results
 
 # Directories
 PROJECTDIR=$1
@@ -26,13 +26,13 @@ cat > .${sname}.sh <<EOF
 echo "**** Job starts ****"
 date
 
-mkdir -p ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/logs
+mkdir -p ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/${RUNDIR}/logs
 
 # merge results
-Rscript prep.R -p '${PROJECTDIR}' -d '${RESULTSDIR}' -c '${CHRNUM}' -r '${RUNDIR}' -v TRUE
+Rscript template.R -p '${PROJECTDIR}' -d '${RESULTSDIR}' -c '${CHRNUM}' -r '${RUNDIR}' -v TRUE
 
 # Move log files into the logs directory
-mv ${WDIR}/${sname}.* ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/logs
+mv ${WDIR}/${sname}.* ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/${RUNDIR}/logs
 
 echo "**** Job ends ****"
 date

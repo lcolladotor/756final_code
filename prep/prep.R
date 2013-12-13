@@ -34,7 +34,7 @@ suppressMessages(library("TxDb.Hsapiens.UCSC.hg19.knownGene"))
 ## Specify parameters
 spec <- matrix(c(
 	'project', 'p', 1, "character", "name of project, for example 'derSnyder'",
-	'dirResult', 'd', 1, "character", "path to the results directory, for example '/home/bst/student/lcollado/756final_data'",
+	'dirResult', 'd', 1, "character", "path to the results directory, for example '/home/bst/student/lcollado/756final_code/results'",
 	'chrnum', 'c', 1, "character", "Chromosome under analysis. Use X instead of chrX.",
 	'run', 'r', 1, "character", "Name of the run, for example run1-v0.0.42",
 	'verbose' , 'v', 2, "logical", "Print status updates",
