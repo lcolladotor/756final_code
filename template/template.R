@@ -59,7 +59,7 @@ reportdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum), op
 dir.create(reportdir, recursive=TRUE)
 
 codedir <- getwd()
-setwd(prepdir)
+setwd(reportdir)
 knit_bootstrap(file.path(codedir, "template.Rmd"), output=file.path(reportdir, "reportName.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=TRUE) # show_code=FALSE is specially useful for results with interpretation
 
 ## Done

@@ -37,6 +37,6 @@ mv ${WDIR}/${sname}.* ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/${RUNDIR}/logs
 echo "**** Job ends ****"
 date
 EOF
-call="qsub -cwd -l jabba,mem_free=50G,h_vmem=100G,h_fsize=10G -N ${sname} -m e .${sname}.sh"
+call="qsub -cwd -l mem_free=10G,h_vmem=30G,h_fsize=10G -N ${sname} -m e .${sname}.sh"
 echo $call
 $call
