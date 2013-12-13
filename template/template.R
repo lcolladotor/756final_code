@@ -37,7 +37,7 @@ if(test){
 	opt$project <- "derHippo"
 	opt$dirResult <- "/home/bst/student/lcollado/756final_code/results"
 	opt$chrnum <- "22"
-	opt$results <- "run1-v0.0.42"
+	opt$results <- "templateStep"
 	opt$verbose <- NULL
 }
 

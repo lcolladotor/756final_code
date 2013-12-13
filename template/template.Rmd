@@ -1,4 +1,4 @@
-Pre-processing report
+Template report
 =====================
 
 # Setup
