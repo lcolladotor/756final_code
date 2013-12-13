@@ -55,7 +55,7 @@ if (is.null(opt$verbose)) opt$verbose <- TRUE
 startTime <- Sys.time()
 	
 ## Create report dir
-reportdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum), opt$results, "report")
+reportdir <- file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum), opt$results)
 dir.create(reportdir, recursive=TRUE)
 
 codedir <- getwd()
