@@ -63,7 +63,7 @@ cdir <- file.path(rdir, chr) # original project-run-chr dir
 
 ## Dirs:
 dirs <- c(wdir=wdir, rawdir=rawdir, pdir=pdir, rdir=rdir, cdir=cdir)
-save(dirs, file.path(wdir, "dirs.Rdata"))
+save(dirs, file=file.path(wdir, "dirs.Rdata"))
 dirs
 ```
 
@@ -185,7 +185,7 @@ names(groupInfo) <- colnames(cov)
 
 ## Get pair region coverage
 # testing
-pairs <- pairs[c(574, 1)]
+pairs <- pairs[1:6, ]
 covdata <- apply(pairs, 1, function(x) {
 	y <- log2(as.data.frame(cov[x["start1"]:x["end2"], ]) + optionsStats$scalefac)
 	y$base <- seq_len(nrow(y))
@@ -195,11 +195,8 @@ covdata <- apply(pairs, 1, function(x) {
 	new$group <- groupInfo[new$sample]
 	return(new)
 })
-names(covdata) <- pairs$cluster
 save(covdata, file=file.path(wdir, "covdata.Rdata"))
 ```
-
-
 
 ## Map to exons
 
@@ -213,16 +210,31 @@ save(exons, file=file.path(wdir, "exons.Rdata"))
 
 ## Find overlaps to exons:
 ov <- findOverlaps(regsub, exons)
+ov.mat <- as.matrix(ov)
+save(ov, ov.mat, file=filepath(wdir, "ov.Rdata"))
 ```
 
 # Example
 
 ```{r "plotCluster", message=FALSE, fig.width=20, fig.height=10, dev="CairoPNG"}
 ## Explore cluster
-i <- 1 # 574 # which.max(pairs$widthNoM) ## can also try
-idx <- as.integer(names(covdata)[i])
-reg <- regsub[regsub$cluster == idx]
-p <- plotCluster(idx=which(start(reg) == pairs$start1[i]), regions=reg, annotation=reg, coverageInfo=cov, groupInfo=groupInfo, titleUse="qval", txdb=TxDb.Hsapiens.UCSC.hg19.knownGene, p.ideogram=NULL, maxExtend=300L, colsubset=NULL, forceLarge=FALSE)
+# for derHippo chr11:
+# which.max(pairs$widthNoM) is 574
+
+## Identify top 10 clusters by area
+df <- data.frame(area=regsub$area, clusterChr=paste0(as.integer(regsub$cluster), chr=as.character(seqnames(regsub))))
+regionClustAreas <- tapply(df$area, df$clusterChr, sum)
+bestArea <- sapply(names(head(sort(regionClustAreas, decreasing=TRUE), 10)), function(y) { which(df$clusterChr == y)[[1]]})
+bestArea
+
+## Use cluster #1 by area
+bestCluster <- as.integer(regsub$cluster[bestArea[1]])
+reg <- regsub[regsub$cluster == bestCluster]
+reg <- reg[ order(start(reg))]
+bestCluster.region <- which.max(width(reg)[-length(reg)])
+i <- which(pairs$start1 == start(reg[bestCluster.region]))
+
+p <- plotCluster(idx=bestCluster.region, regions=reg, annotation=reg, coverageInfo=cov, groupInfo=groupInfo, titleUse="qval", txdb=TxDb.Hsapiens.UCSC.hg19.knownGene, p.ideogram=NULL, maxExtend=300L, colsubset=NULL, forceLarge=FALSE)
 print(p)
 ```
 
@@ -243,6 +255,8 @@ gfit.ar
 
 
 # Reproducibility
+
+Date the report was generated.
 
 ```{r reproducibility1, echo=FALSE}
 ## Date the report was generated

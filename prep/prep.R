@@ -54,7 +54,7 @@ if(test){
 	opt <- NULL
 	opt$project <- "derSnyder"
 	opt$dirResult <- "/home/bst/student/lcollado/756final_data"
-	opt$chrnum <- "21"
+	opt$chrnum <- "11"
 	opt$run <- "run1-v0.0.42"
 	opt$verbose <- NULL
 }
@@ -78,7 +78,7 @@ dir.create(prepdir, recursive=TRUE)
 
 codedir <- getwd()
 setwd(file.path(opt$dirResult, opt$project, paste0("chr", opt$chrnum)))
-knit_bootstrap(file.path(codedir, "prep.Rmd"), output=file.path(prepdir, "prep.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=FALSE)
+knit_bootstrap(file.path(codedir, "prep.Rmd"), output=file.path(prepdir, "prep.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=TRUE)
 
 
 ## Done
