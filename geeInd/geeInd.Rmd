@@ -1,0 +1,123 @@
+Run GEE with independence working correlation
+=============================================
+
+# Setup
+
+## Libraries
+
+```{r "setup"}
+## Load libraries
+## Available from http://cran.r-project.org/web/packages/getopt/index.html
+# install.packages("getopt")
+library("getopt")
+
+## Available from http://cran.at.r-project.org/web/packages/knitrBootstrap/index.html
+# install.packages("knitrBootstrap")
+library("knitrBootstrap")
+
+# --- Specify any other libraries you need
+# --- Not needed (since you load them in template.R), but good for the report
+# --- Anyhow, just copying and pasting from template.R is good
+## gee
+# install.packages("geepack")
+library("geepack")
+
+## for mclapply
+library("parallel")
+```
+
+## Directories
+
+```{r "directories"}
+## Chr
+chr <- paste0("chr", opt$chrnum)
+chrnum <- as.numeric(opt$chrnum)
+
+## Create dir to save files
+if(opt$verbose) message("Creating directories")
+ddir <- file.path(opt$dirResult, opt$project, chr) # data directory (might change say if step2 uses the results from step2)
+wdir <- file.path(opt$dirResult, opt$project, chr, opt$results) # working dir
+dir.create(wdir, recursive=TRUE)
+
+## Want to save some 'object'? Use:
+# save(object, file=file.path(wdir, "object.Rdata"))
+```
+
+
+# GEE independence
+
+
+```{r "rungee", dev="CairoPNG"}
+## Load data
+load(file.path(ddir, "geeAR1", "covdata.Rdata"))
+load(file.path(ddir, "geeAR1", "pairs.Rdata"))
+
+
+## Run GEE
+idx <- seq_len(length(covdata.used))
+## testing:
+#idx <- 1:2
+myGEE <- function(i, corstr) {
+	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
+}
+
+## GEE AR1
+if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
+geeInd <- mclapply(idx, myGEE, corstr="exchangeable", mc.cores=20)
+names(geeInd) <- names(covdata.used)[idx]
+save(geeInd, file=file.path(wdir, "geeInd.Rdata"))
+
+## Show an example:
+summary(geeInd[[1]])
+
+
+## Extract region2 coef estimate, st.error, and Wald stat
+myGEE.stat <- function(y) {
+	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
+	## Assumes that geeglm(std.err="san.se") which is the default value
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$valpha))
+	wald <- (beta/vbeta)^2
+	pval <- 1 - pchisq(wald, df=1)
+	df <- data.frame(coef=c("region2", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	rownames(df) <- seq_len(nrow(df))
+	return(df)
+}
+geeInd.stat <- lapply(geeInd, myGEE.stat)
+save(geeInd.stat, file=file.path(wdir, "geeInd.stat.Rdata"))
+
+## Show an example:
+geeInd.stat[[1]]
+```
+
+
+
+
+
+
+
+
+
+
+# Reproducibility
+
+Date the report was generated.
+
+```{r "reproducibility1", echo=FALSE}
+## Date the report was generated
+Sys.time()
+```
+
+Wallclock time spent generating the report.
+
+```{r "reproducibility2", echo=FALSE}
+## Processing time in seconds
+totalTime <- diff(c(startTime, Sys.time()))
+round(totalTime, digits=3)
+```
+
+`R` session information.
+
+```{r "reproducibility3", echo=FALSE}
+## Session info
+sessionInfo()
+```
