@@ -1,0 +1,10 @@
+## Output files that do not be version controlled
+cache/
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.tex
+*.toc
+*.vrb
