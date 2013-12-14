@@ -197,8 +197,8 @@ Using \emph{region1} as the reference, we want to test $\bbeta_3\left( \text{reg
 	\item 3 groups: CO, ETOH and CT
 	\item 890 pairs; most short:
 	\begin{itemize}
-		\item 32.24719\% with all regions (1, M, 2) having a width greater than 1
-		\item 17.97753\% greater than 2
+		\item $\sim$ 32\% with all regions (1, M, 2) having a width greater than 1
+		\item $\sim$ 18\% greater with all widths greater than 2
 	\end{itemize}
 	\item Chose the largest cluster, then the pair starting with the largest region from the cluster.
 \end{itemize}
@@ -214,7 +214,7 @@ load("../results/derHippo/chr6/covdata.Rdata")
 load("../results/derHippo/chr6/regsub.Rdata")
 load("../results/derHippo/chr6/pairs.Rdata")
 suppressMessages(library("GenomicRanges"))
-suppressMessages(library("gee"))
+suppressMessages(library("geepack"))
 
 
 ## Identify top 10 clusters by area
@@ -228,12 +228,13 @@ reg <- regsub[regsub$cluster == bestCluster]
 reg <- reg[ order(start(reg))]
 bestCluster.region <- which.max(width(reg)[-length(reg)])
 i <- which(pairs$start1 == start(reg[bestCluster.region]))
+i2 <- as.integer(rownames(pairs[pairs$cluster == 168, ])[6])
 @
 
 <<"data">>=
-pairs[i, ]
-dim(covdata[[i]])
-head(covdata[[i]], n=1)
+pairs[i2, ]
+dim(covdata[[i2]])
+head(covdata[[i2]], n=1)
 @
 
 
@@ -241,17 +242,19 @@ head(covdata[[i]], n=1)
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{GEE - exchangeable}
+\frametitle{GEE - AR1}
+
 
 <<"geeex", echo=FALSE, message=FALSE, results="hide">>=
-## Fit gee with exchangeable corr
-gfit.ex <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable", silent=TRUE)
+## Fit gee with AR-1 corr
+gfit.ar <- geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, data = covdata[[i2]], id = sample, corstr = "ar1")
 @
 
+\tiny
 <<"geeexres">>=
-gfit.ex$call
-c(gfit.ex$coefficients, dim(gfit.ex$working.correlation)[1])
+summary(gfit.ar)
 @
+\normalsize
 \end{frame}
 
 
