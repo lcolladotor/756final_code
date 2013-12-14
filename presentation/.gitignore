@@ -8,3 +8,7 @@ cache/
 *.tex
 *.toc
 *.vrb
+*-blx.bib
+*.blg
+*.bbl
+*.run.xml
