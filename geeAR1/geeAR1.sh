@@ -29,7 +29,7 @@ date
 mkdir -p ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/${RUNDIR}/logs
 
 # merge results
-Rscript template.R -p '${PROJECTDIR}' -d '${RESULTSDIR}' -c '${CHRNUM}' -r '${RUNDIR}' -v TRUE
+Rscript geeAR1.R -p '${PROJECTDIR}' -d '${RESULTSDIR}' -c '${CHRNUM}' -r '${RUNDIR}' -v TRUE
 
 # Move log files into the logs directory
 mv ${WDIR}/${sname}.* ${RESULTSDIR}/${PROJECTDIR}/chr${CHRNUM}/${RUNDIR}/logs
