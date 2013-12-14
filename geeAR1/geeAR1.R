@@ -18,6 +18,8 @@ library("knitrBootstrap")
 # install.packages("geepack")
 library("geepack")
 
+## for mclapply
+library("parallel")
 
 ## Specify parameters
 spec <- matrix(c(

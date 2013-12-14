@@ -1,5 +1,5 @@
-Run GEE with AR1 correlation
-============================
+Run GEE with AR1 working correlation
+===================================
 
 # Setup
 
@@ -21,6 +21,9 @@ library("knitrBootstrap")
 ## gee
 # install.packages("geepack")
 library("geepack")
+
+## for mclapply
+library("parallel")
 ```
 
 ## Directories
@@ -41,9 +44,86 @@ dir.create(wdir, recursive=TRUE)
 ```
 
 
-# GEE
+# GEE AR1
 
 
+```{r "rungee", dev="CairoPng"}
+## Load data
+load(file.path(ddir, "covdata.Rdata"))
+load(file.path(ddir, "pairs.Rdata"))
+
+## How many region pairs are small?
+nrow(subset(pairs, width1 > 1 & width2 > 1)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 1 & widthM > 1 & width2 > 1)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 2 & width2 > 2)) / nrow(pairs) * 100
+nrow(subset(pairs, width1 > 2 & widthM > 2 & width2 > 2)) / nrow(pairs) * 100
+
+## Are some of them too long for GEE?
+clen <- sapply(covdata, nrow)
+summary(clen)
+nrow(subset(pairs, widthM < 500)) / nrow(pairs) * 100
+nrow(subset(pairs, widthM < 250)) / nrow(pairs) * 100
+
+## Choose a final index
+nrow(subset(pairs, width1 > 1 & width2 > 1)) / nrow(pairs) * 100
+summary(subset(pairs, width1 > 1 & width2 > 1))
+with(subset(pairs, width1 > 1 & width2 > 1), pairs(~width1 + widthM + width2))
+
+nrow(subset(pairs, width1 > 1 & widthM < 500 & width2 > 1)) / nrow(pairs) * 100
+summary(subset(pairs, width1 > 1 & widthM < 500 & width2 > 1))
+with(subset(pairs, width1 > 1 & widthM < 500 & width2 > 1), pairs(~width1 + widthM + width2))
+
+nrow(subset(pairs, width1 > 1 & widthM < 250 & width2 > 1)) / nrow(pairs) * 100
+summary(subset(pairs, width1 > 1 & widthM < 250 & width2 > 1))
+with(subset(pairs, width1 > 1 & widthM > 1 & widthM < 250 & width2 > 1), pairs(~width1 + widthM + width2))
+
+## Use regions with width1 > 1, width2 > 1 and widthM < 250
+pairs.use <- with(pairs, which(width1 > 1 & widthM < 250 & width2 > 1))
+
+## Subset data set
+covdata.used <- covdata[pairs.use]
+names(covdata.used) <- pairs.use
+pairs.used <- pairs[pairs.use, ]
+
+## Save subsets
+save(covdata.used, file=file.path(wdir, "covdata.used.Rdata"))
+save(pairs.used, file=file.path(wdir, "pairs.used.Rdata"))
+
+## Run GEE
+# idx <- seq_len(length(covdata.used))
+# testing:
+idx <- 1:2
+myGEE <- function(i, corstr) {
+	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
+}
+
+## GEE AR1
+if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
+geeAR1 <- mclapply(idx, myGEE, corstr="ar1", mc.cores=20)
+names(geeAR1) <- names(covdata.used)[idx]
+save(geeAR1, file=file.path(wdir, "geeAR1.Rdata"))
+
+## Show an example:
+summary(geeAR1[[1]])
+
+
+## Extract region2 coef estimate, st.error, and Wald stat
+myGEE.stat <- function(y) {
+	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
+	## Assumes that geeglm(std.err="san.se") which is the default value
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$valpha))
+	wald <- (beta/vbeta)^2
+	pval <- 1 - pchisq(wald, df=1)
+	df <- data.frame(coef=c("region2", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	rownames(df) <- seq_len(nrow(df))
+	return(df)
+}
+geeAR1.stat <- lapply(geeAR1, myGEE.stat)
+save(geeAR1.stat, file=file.path(wdir, "geeAR1.stat.Rdata"))
+
+## Show an example:
+geeAR1.stat[[1]]
+```
 
 
 
