@@ -25,9 +25,9 @@ library("reshape2")
 # biocLite("GenomicRanges")
 library("GenomicRanges")
 
-## Available from http://cran.at.r-project.org/web/packages/gee/index.html
-# install.packages("gee")
-library("gee")
+## Available from http://cran.at.r-project.org/web/packages/geepack/index.html
+# install.packages("geepack")
+library("geepack")
 
 ## Available from https://github.com/lcolladotor/derfinder
 ## Read README.md for installation instructions
@@ -175,6 +175,7 @@ if(file.exists(file.path(rdir, "colsubset.Rdata"))) {
 	load(file.path(rdir, "colsubset.Rdata"))
 	cov <- cov[colsubset]
 } 
+save(cov, file=file.path(wdir, "cov.Rdata"))
 
 ## Load transform info and sample depth adjustments
 load(file.path(rawdir, "optionsStats.Rdata"))
@@ -237,6 +238,7 @@ i <- which(pairs$start1 == start(reg[bestCluster.region]))
 
 p <- plotCluster(idx=bestCluster.region, regions=reg, annotation=reg, coverageInfo=cov, groupInfo=groupInfo, titleUse="qval", txdb=TxDb.Hsapiens.UCSC.hg19.knownGene, p.ideogram=NULL, maxExtend=300L, colsubset=NULL, forceLarge=FALSE)
 print(p)
+save(p, file=file.path(wdir, "figure", "p.Rdata") )
 ```
 
 
@@ -246,11 +248,11 @@ head(covdata[[i]])
 summary(covdata[[i]])
 
 ## Attempt to fit a couple GEE models
-gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "independence")
+gfit.ind <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "independence")
 gfit.ind
-gfit.ex <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable")
+gfit.ex <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable")
 gfit.ex
-gfit.ar <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "AR-M", Mv=1)
+gfit.ar <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "ar1")
 gfit.ar
 ```
 

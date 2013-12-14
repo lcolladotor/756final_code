@@ -15,9 +15,9 @@ library("knitrBootstrap")
 # biocLite("GenomicRanges")
 library("GenomicRanges")
 
-## Available from http://cran.at.r-project.org/web/packages/gee/index.html
-# install.packages("gee")
-library("gee")
+## Available from http://cran.at.r-project.org/web/packages/geepack/index.html
+# install.packages("geepack")
+library("geepack")
 
 ## Available from https://github.com/lcolladotor/derfinder
 ## Read README.md for installation instructions
