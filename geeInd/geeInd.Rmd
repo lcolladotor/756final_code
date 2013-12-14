@@ -63,7 +63,7 @@ myGEE <- function(i, corstr) {
 
 ## GEE AR1
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
-geeInd <- mclapply(idx, myGEE, corstr="exchangeable", mc.cores=20)
+geeInd <- mclapply(idx, myGEE, corstr="independence", mc.cores=20)
 names(geeInd) <- names(covdata.used)[idx]
 save(geeInd, file=file.path(wdir, "geeInd.Rdata"))
 
