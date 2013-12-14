@@ -1,5 +1,5 @@
 **** Job starts ****
-Sat Dec 14 18:26:32 EST 2013
+Sat Dec 14 18:35:47 EST 2013
   |                                                                         |                                                                 |   0%  |                                                                         |.....                                                            |   8%
   ordinary text without R code
 
@@ -47,7 +47,7 @@ List of 1
 
 
    user  system elapsed 
-464.562   4.536  90.348 
+133.498   2.147  32.609 
 R version 3.0.2 Patched (2013-10-17 r64066)
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -61,4 +61,4 @@ loaded via a namespace (and not attached):
 [1] evaluate_0.5.1 formatR_0.10   knitr_1.5      markdown_0.6.3 stringr_0.6.2 
 [6] tools_3.0.2   
 **** Job ends ****
-Sat Dec 14 18:28:03 EST 2013
+Sat Dec 14 18:36:20 EST 2013
