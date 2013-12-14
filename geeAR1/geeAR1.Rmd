@@ -47,7 +47,7 @@ dir.create(wdir, recursive=TRUE)
 # GEE AR1
 
 
-```{r "rungee", dev="CairoPng"}
+```{r "rungee", dev="CairoPNG"}
 ## Load data
 load(file.path(ddir, "covdata.Rdata"))
 load(file.path(ddir, "pairs.Rdata"))
