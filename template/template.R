@@ -1,5 +1,8 @@
 ## --- Basic description of what this step does
 
+## Example usage:
+# Rscript template.R  -p 'derHippo' -d '/Users/lcollado/enigma2/756final_code/results' -c '22' -r 'templateStep' -v TRUE
+
 ## Load libraries
 
 ## Available from http://cran.r-project.org/web/packages/getopt/index.html

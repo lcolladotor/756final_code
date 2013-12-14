@@ -1,0 +1,283 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{CambridgeUS}
+%%%% knitr stuff
+
+
+%%%% knitr stuff end
+
+\usepackage{color}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{comment}
+\usepackage{moreverb}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{upgreek}
+\usepackage[isbn=false, doi=false]{biblatex}
+\bibliography{biblio}
+
+
+
+\definecolor{myblue}{rgb}{0.25, 0, 0.75}
+\definecolor{mygold}{rgb}{1,0.8,0.2}
+\definecolor{gray}{rgb}{0.5, 0.5, 0.5}
+\definecolor{lucia}{rgb}{0.8,0.4,0.7}
+
+\newcommand{\myurl}[1]{\href{http://#1}{\textcolor{gray}{\texttt{#1}}}}
+\newcommand{\myem}[1]{\structure{#1}}
+\newcommand{\myurlshort}[2]{\href{#1}{\textcolor{gray}{\textsf{#2}}}}
+
+\newcommand{\RPackage}[1]{\textcolor{gray}{\textsf{#1}}}
+\newcommand{\pl}[1]{\texttt{#1}}
+\newcommand{\RCode}[1]{\texttt{#1}}
+\newcommand{\RFunction}[1]{\textsf{#1}}
+\newcommand{\RClass}[1]{\textcolor{mygold}{\textsf{#1}}}
+\newcommand{\BIOCfunction}[1]{\textcolor{orange}{#1}}
+
+\setbeamercolor{example text}{fg=lucia}
+\setbeamertemplate{sections/subsections in toc}[ball unumbered]
+\setbeamertemplate{frametitle continuation}[from second][]
+\setbeamertemplate{itemize subitem}[triangle]
+\setbeamertemplate{footline}[page number]
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{navigation symbols}{}
+
+\renewcommand{\footnotesize}{\fontsize{6.10}{12}\selectfont}
+
+% Math
+\newtheorem{thm}{Theorem}
+\newcommand{\btheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bupvartheta}{\mbox{\boldmath $\upvartheta$}}
+\newcommand{\bTheta}{\mbox{\boldmath $\Theta$}}
+\newcommand{\bPsi}{\mbox{\boldmath $\Psi$}}
+\newcommand{\bbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\bX}{\mbox{\boldmath $X$}}
+
+\def\argmax{\operatornamewithlimits{arg\,max}}
+\def\argmin{\operatornamewithlimits{arg\,min}}
+
+% knitr options
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.8\\linewidth', cache=TRUE)
+options(width=70)
+@
+
+\title{Merging regions}
+\author{Dan Jiang and Leo Collado}
+\date{
+December 17th, 2013
+}
+
+\begin{document}
+
+\begin{frame}[allowframebreaks]
+  \titlepage
+\end{frame}
+
+\begin{frame}[allowframebreaks]
+  \frametitle{}
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem setting}
+
+\subsection{Background}
+
+\begin{frame}[fragile]
+  \frametitle{High-Throughput Genomics Panorama \footfullcite{soon_high-throughput_2013}}
+  \begin{figure}[htbp] 
+  \begin{centering}   
+  \includegraphics[height=0.4\textwidth, width=0.4225806\textwidth]{panorama.png} 
+  \end{centering} 
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{What is common?}
+\begin{itemize}
+	\item Measurements along the genome (sometimes summarized)
+	\item Two or more groups of samples
+	\item Typical question: are there differences between the groups?
+	\begin{itemize}
+		\item $\rightarrow$ Find the candidate regions.
+	\end{itemize}
+\end{itemize}
+
+\alert{Issue}: regions might be highly fragmented.
+
+Why?
+\begin{enumerate}
+	\item Biological reasons: regions correspond to two exons (intron is the cause).
+	\item Measurement not ideal: coverage dips.
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example region cluster (by distance)}
+  \begin{figure}[htbp] 
+  \begin{centering}   
+  \includegraphics[height=0.45\textwidth, width=0.90\textwidth]{../results/derHippo/chr6/figure/plotCluster.png}
+  \end{centering} 
+  \end{figure}
+\end{frame}
+
+
+\subsection{Question}
+
+\begin{frame}
+\frametitle{Question}
+
+
+
+Are two adjacent regions \emph{similar}?
+
+\begin{enumerate}
+	\item Can we link them?
+	\item a
+\end{enumerate}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proposed method}
+
+\begin{frame}
+\frametitle{Translating framework}
+
+\begin{itemize}
+	\item What is measured? 
+	\begin{itemize}
+		\item Coverage $=: Y$
+		\item Transformed: $\log_2( Y + 32)$
+	\end{itemize}
+	\item Individual (cluster of measurements) $\rightarrow$ sample
+	\item Repeated visits $\rightarrow$ individual base pairs (from a given chromosome)
+	\begin{itemize}
+		\item Note that the data is correlated!
+	\end{itemize}	
+\end{itemize}
+
+Consider a region pair:
+\begin{enumerate}
+	\item region1: first region
+	\item regionM: middle part
+	\item region2: second region
+\end{enumerate}
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Proposed method}
+
+Model for sample $i$:
+
+\[ \log_2( Y_{ijk} + 32) =  \alpha + \beta_1 \text{sampleDepth}_i + \bbeta_{2} \text{group}_j + \bbeta_{3} \text{region}_k + \epsilon \]
+
+Using \emph{region1} as the reference, we want to test $\bbeta_3\left( \text{region}_2 \right) = 0$.
+
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example}
+
+\begin{frame}
+\frametitle{derHippo chr 6}
+
+\begin{itemize}
+	\item 25 samples
+	\item 3 groups: CO, ETOH and CT
+	\item 890 pairs; most short:
+	\begin{itemize}
+		\item $\sim$ 32\% with all regions (1, M, 2) having a width greater than 1
+		\item $\sim$ 18\% greater with all widths greater than 2
+	\end{itemize}
+	\item Chose the largest cluster, then the pair starting with the largest region from the cluster.
+\end{itemize}
+	
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Data}
+
+<<"example", echo=FALSE, message=FALSE>>=
+load("../results/derHippo/chr6/covdata.Rdata")
+load("../results/derHippo/chr6/regsub.Rdata")
+load("../results/derHippo/chr6/pairs.Rdata")
+suppressMessages(library("GenomicRanges"))
+suppressMessages(library("geepack"))
+
+
+## Identify top 10 clusters by area
+df <- data.frame(area=regsub$area, clusterChr=paste0(as.integer(regsub$cluster), chr=as.character(seqnames(regsub))))
+regionClustAreas <- tapply(df$area, df$clusterChr, sum)
+bestArea <- sapply(names(head(sort(regionClustAreas, decreasing=TRUE), 10)), function(y) { which(df$clusterChr == y)[[1]]})
+
+## Use cluster #1 by area
+bestCluster <- as.integer(regsub$cluster[bestArea[1]])
+reg <- regsub[regsub$cluster == bestCluster]
+reg <- reg[ order(start(reg))]
+bestCluster.region <- which.max(width(reg)[-length(reg)])
+i <- which(pairs$start1 == start(reg[bestCluster.region]))
+i2 <- as.integer(rownames(pairs[pairs$cluster == 168, ])[6])
+@
+
+<<"data">>=
+pairs[i2, ]
+dim(covdata[[i2]])
+head(covdata[[i2]], n=1)
+@
+
+
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{GEE - AR1}
+
+
+<<"geeex", echo=FALSE, message=FALSE, results="hide">>=
+## Fit gee with AR-1 corr
+gfit.ar <- geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, data = covdata[[i2]], id = sample, corstr = "ar1")
+@
+
+\tiny
+<<"geeexres">>=
+summary(gfit.ar)
+@
+\normalsize
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{End}
+
+\begin{frame}
+\frametitle{References}
+
+\begin{itemize}
+\item \textbf{Project} code and results: \url{https://github.com/lcolladotor/756final_code}
+\item A. Frazee, S. Sabunciyan, K. D. Hansen, R. A. Irizarry, and J. T. Leek (2013). Differential expression analysis of rna-seq data at single base resolution, Biostatistics, \emph{recently accepted}.
+\item L. Collado-Torres, A. Frazee, M. Love, R. A. Irizarry, A. E. Jaffe, J. T. Leek (2013). derfinder: Software for annotation-agnostic RNA-seq differential expression analysis. Manuscript in preparation.
+\item \texttt{derfinder} package \url{https://github.com/lcolladotor/derfinder}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\centerline{Thank you!}
+\end{frame}
+
+\end{document}
+
+
