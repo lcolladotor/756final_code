@@ -24,9 +24,9 @@ library("reshape2")
 # biocLite("GenomicRanges")
 library("GenomicRanges")
 
-## Available from http://cran.at.r-project.org/web/packages/gee/index.html
-# install.packages("gee")
-library("gee")
+## Available from http://cran.at.r-project.org/web/packages/geepack/index.html
+# install.packages("geepack")
+library("geepack")
 
 ## Available from https://github.com/lcolladotor/derfinder
 ## Read README.md for installation instructions
@@ -62,7 +62,12 @@ dir.create(wdir, recursive=TRUE)
 ## already exists
 </pre></div>
 <div class="source"><pre class="knitr r">dir.create(rawdir, recursive=TRUE)
-
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning:
+## '/home/bst/student/lcollado/756final_code/results/derHippo/chr6/raw'
+## already exists
+</pre></div>
+<div class="source"><pre class="knitr r">
 ## Shortcuts for previous directories
 pdir <- file.path("/dcs01/lieber/ajaffe/Brain/derRuns", opt$project) ## original project dir
 rdir <- file.path(pdir, "derAnalysis", opt$run) ## original project-run dir
@@ -469,6 +474,7 @@ if(opt$verbose) message("Extracting coverage per pair region")
 	load(file.path(rdir, "colsubset.Rdata"))
 	cov <- cov[colsubset]
 } 
+save(cov, file=file.path(wdir, "cov.Rdata"))
 
 ## Load transform info and sample depth adjustments
 load(file.path(rawdir, "optionsStats.Rdata"))
@@ -541,6 +547,8 @@ p <- plotCluster(idx=bestCluster.region, regions=reg, annotation=reg, coverageIn
 print(p)
 </pre></div>
 <div class="rimage default"><img src="figure/plotCluster.png" title="plot of chunk plotCluster" alt="plot of chunk plotCluster" class="plot" /></div>
+<div class="source"><pre class="knitr r">save(p, file=file.path(wdir, "figure", "p.Rdata") )
+</pre></div>
 </div></div>
 
 
@@ -577,35 +585,13 @@ head(covdata[[i]])
 </pre></div>
 <div class="source"><pre class="knitr r">
 ## Attempt to fit a couple GEE models
-gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "independence")
-</pre></div>
-<div class="message"><pre class="knitr r">## Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
-## running glm to get initial regression estimate
-</pre></div>
-<div class="output"><pre class="knitr r">##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
-##       -9.2920        0.5920       -0.7108       -0.3104       -0.9189 
-## regionregion2 
-##        0.5878
-</pre></div>
-<div class="source"><pre class="knitr r">gfit.ind
+gfit.ind <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "independence")
+gfit.ind
 </pre></div>
 <div class="output"><pre class="knitr r">## 
-##  GEE:  GENERALIZED LINEAR MODELS FOR DEPENDENT DATA
-##  gee S-function, version 4.13 modified 98/01/27 (1998) 
-## 
-## Model:
-##  Link:                      Identity 
-##  Variance to Mean Relation: Gaussian 
-##  Correlation Structure:     Independent 
-## 
 ## Call:
-## gee(formula = coverage ~ sampleDepth + group + region, id = sample, 
-##     data = covdata[[i]], family = gaussian, corstr = "independence")
-## 
-## Number of observations :  8475 
-## 
-## Maximum cluster size   :  339 
-## 
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata[[i]], id = sample, corstr = "independence")
 ## 
 ## Coefficients:
 ##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
@@ -613,49 +599,21 @@ gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = cov
 ## regionregion2 
 ##        0.5878 
 ## 
-## Estimated Scale Parameter:  1.39
-## Number of Iterations:  1
+## Degrees of Freedom: 8475 Total (i.e. Null);  8469 Residual
 ## 
-## Working Correlation[1:4,1:4]
-##      [,1] [,2] [,3] [,4]
-## [1,]    1    0    0    0
-## [2,]    0    1    0    0
-## [3,]    0    0    1    0
-## [4,]    0    0    0    1
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 1.389
 ## 
-## 
-## Returned Error Value:
-## [1] 0
+## Correlation:  Structure = independence  
+## Number of clusters:   25   Maximum cluster size: 339
 </pre></div>
-<div class="source"><pre class="knitr r">gfit.ex <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable")
-</pre></div>
-<div class="message"><pre class="knitr r">## Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
-## running glm to get initial regression estimate
-</pre></div>
-<div class="output"><pre class="knitr r">##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
-##       -9.2920        0.5920       -0.7108       -0.3104       -0.9189 
-## regionregion2 
-##        0.5878
-</pre></div>
-<div class="source"><pre class="knitr r">gfit.ex
+<div class="source"><pre class="knitr r">gfit.ex <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "exchangeable")
+gfit.ex
 </pre></div>
 <div class="output"><pre class="knitr r">## 
-##  GEE:  GENERALIZED LINEAR MODELS FOR DEPENDENT DATA
-##  gee S-function, version 4.13 modified 98/01/27 (1998) 
-## 
-## Model:
-##  Link:                      Identity 
-##  Variance to Mean Relation: Gaussian 
-##  Correlation Structure:     Exchangeable 
-## 
 ## Call:
-## gee(formula = coverage ~ sampleDepth + group + region, id = sample, 
-##     data = covdata[[i]], family = gaussian, corstr = "exchangeable")
-## 
-## Number of observations :  8475 
-## 
-## Maximum cluster size   :  339 
-## 
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata[[i]], id = sample, corstr = "exchangeable")
 ## 
 ## Coefficients:
 ##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
@@ -663,35 +621,43 @@ gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = cov
 ## regionregion2 
 ##        0.5878 
 ## 
-## Estimated Scale Parameter:  1.39
-## Number of Iterations:  1
+## Degrees of Freedom: 8475 Total (i.e. Null);  8469 Residual
 ## 
-## Working Correlation[1:4,1:4]
-##        [,1]   [,2]   [,3]   [,4]
-## [1,] 1.0000 0.0245 0.0245 0.0245
-## [2,] 0.0245 1.0000 0.0245 0.0245
-## [3,] 0.0245 0.0245 1.0000 0.0245
-## [4,] 0.0245 0.0245 0.0245 1.0000
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 1.389
 ## 
+## Correlation:  Structure = exchangeable    Link = identity 
+## Estimated Correlation Parameters:
+##   alpha 
+## 0.02452 
 ## 
-## Returned Error Value:
-## [1] 0
+## Number of clusters:   25   Maximum cluster size: 339
 </pre></div>
-<div class="source"><pre class="knitr r">gfit.ar <- gee(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "AR-M", Mv=1)
+<div class="source"><pre class="knitr r">gfit.ar <- geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata[[i]], family = gaussian, corstr = "ar1")
+gfit.ar
 </pre></div>
-<div class="message"><pre class="knitr r">## Beginning Cgee S-function, @(#) geeformula.q 4.13 98/01/27
-## running glm to get initial regression estimate
-</pre></div>
-<div class="output"><pre class="knitr r">##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
-##       -9.2920        0.5920       -0.7108       -0.3104       -0.9189 
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata[[i]], id = sample, corstr = "ar1")
+## 
+## Coefficients:
+##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
+##     -10.13231       0.61052      -0.73540      -0.32181      -0.09093 
 ## regionregion2 
-##        0.5878
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: VC_GEE_covlag: arg has > MAX_COVLAG rows
-</pre></div>
-<div class="source"><pre class="knitr r">gfit.ar
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'gfit.ar' not found
+##      -0.13418 
+## 
+## Degrees of Freedom: 8475 Total (i.e. Null);  8469 Residual
+## 
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 1.568
+## 
+## Correlation:  Structure = ar1    Link = identity 
+## Estimated Correlation Parameters:
+##  alpha 
+## 0.9585 
+## 
+## Number of clusters:   25   Maximum cluster size: 339
 </pre></div>
 </div></div>
 
@@ -701,14 +667,14 @@ gfit.ind <- gee(coverage ~ sampleDepth + group + region, id = sample, data = cov
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-13 02:18:09 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 16:39:49 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 15.41 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 16.43 mins
 </pre></div>
 </div></div>
 
@@ -739,7 +705,7 @@ Wallclock time spent generating the report.
 ##  [6] derfinder_0.0.42                        
 ##  [7] RcppArmadillo_0.3.930.1                 
 ##  [8] Rcpp_0.10.6                             
-##  [9] gee_4.13-18                             
+##  [9] geepack_1.1-6                           
 ## [10] GenomicRanges_1.14.4                    
 ## [11] XVector_0.2.0                           
 ## [12] IRanges_1.20.6                          
