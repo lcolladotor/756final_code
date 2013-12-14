@@ -49,8 +49,8 @@ dir.create(wdir, recursive=TRUE)
 
 ```{r "rungee", dev="CairoPNG"}
 ## Load data
-load(file.path(ddir, "geeAR1", "covdata.Rdata"))
-load(file.path(ddir, "geeAR1", "pairs.Rdata"))
+load(file.path(ddir, "geeAR1", "covdata.used.Rdata"))
+load(file.path(ddir, "geeAR1", "pairs.used.Rdata"))
 
 
 ## Run GEE
