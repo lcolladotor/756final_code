@@ -205,9 +205,9 @@ save(covdata.used, file=file.path(wdir, "covdata.used.Rdata"))
 save(pairs.used, file=file.path(wdir, "pairs.used.Rdata"))
 
 ## Run GEE
-# idx <- seq_len(length(covdata.used))
-# testing:
-idx <- 1:2
+idx <- seq_len(length(covdata.used))
+## testing:
+#idx <- 1:2
 myGEE <- function(i, corstr) {
 	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
 }
@@ -215,7 +215,7 @@ myGEE <- function(i, corstr) {
 ## GEE AR1
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-14 18:05:05 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-14 18:10:05 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeAR1 <- mclapply(idx, myGEE, corstr="ar1", mc.cores=20)
 names(geeAR1) <- names(covdata.used)[idx]
@@ -290,14 +290,14 @@ geeAR1.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:05:09 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:12:29 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 6.15 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 2.43 mins
 </pre></div>
 </div></div>
 
