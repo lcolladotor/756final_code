@@ -1,0 +1,10 @@
+Warning message:
+In dir.create(reportdir, recursive = TRUE) :
+  '/home/bst/student/lcollado/756final_code/results/derHippo/chr6/geeEx' already exists
+
+
+processing file: /home/bst/student/lcollado/756final_code/geeEx/geeEx.Rmd
+output file: geeEx.md
+
+Warning message:
+In png(tempfile()) : unable to open connection to X11 display ''

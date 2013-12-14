@@ -58,30 +58,13 @@ dir.create(wdir, recursive=TRUE)
 
 
 <div class="chunk" id="rungee"><div class="rcode"><div class="source"><pre class="knitr r">## Load data
-load(file.path(ddir, "geeAR1", "covdata.Rdata"))
-</pre></div>
-<div class="warning"><pre class="knitr r">## Warning: cannot open compressed file
-## '/home/bst/student/lcollado/756final_code/results/derHippo/chr22/geeAR1/covdata.Rdata',
-## probable reason 'No such file or directory'
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: cannot open the connection
-</pre></div>
-<div class="source"><pre class="knitr r">load(file.path(ddir, "geeAR1", "pairs.Rdata"))
-</pre></div>
-<div class="warning"><pre class="knitr r">## Warning: cannot open compressed file
-## '/home/bst/student/lcollado/756final_code/results/derHippo/chr22/geeAR1/pairs.Rdata',
-## probable reason 'No such file or directory'
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: cannot open the connection
-</pre></div>
-<div class="source"><pre class="knitr r">
+load(file.path(ddir, "geeAR1", "covdata.used.Rdata"))
+load(file.path(ddir, "geeAR1", "pairs.used.Rdata"))
+
 
 ## Run GEE
 idx <- seq_len(length(covdata.used))
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'covdata.used' not found
-</pre></div>
-<div class="source"><pre class="knitr r">## testing:
+## testing:
 #idx <- 1:2
 myGEE <- function(i, corstr) {
 	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
@@ -90,25 +73,41 @@ myGEE <- function(i, corstr) {
 ## GEE AR1
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-14 18:20:03 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-14 18:26:18 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeEx <- mclapply(idx, myGEE, corstr="exchangeable", mc.cores=20)
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'idx' not found
-</pre></div>
-<div class="source"><pre class="knitr r">names(geeEx) <- names(covdata.used)[idx]
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'covdata.used' not found
-</pre></div>
-<div class="source"><pre class="knitr r">save(geeEx, file=file.path(wdir, "geeEx.Rdata"))
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeEx' not found
-</pre></div>
-<div class="source"><pre class="knitr r">
+names(geeEx) <- names(covdata.used)[idx]
+save(geeEx, file=file.path(wdir, "geeEx.Rdata"))
+
 ## Show an example:
 summary(geeEx[[1]])
 </pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeEx' not found
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+##  Coefficients:
+##               Estimate  Std.err  Wald Pr(>|W|)    
+## (Intercept)    3.67717  0.72270 25.89  3.6e-07 ***
+## sampleDepth    0.05473  0.02475  4.89    0.027 *  
+## groupCO       -0.16671  0.03628 21.11  4.3e-06 ***
+## groupETOH     -0.15038  0.03835 15.38  8.8e-05 ***
+## regionregionM  0.00152  0.00438  0.12    0.728    
+## regionregion2  0.00707  0.00623  1.29    0.256    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Estimated Scale Parameters:
+##             Estimate Std.err
+## (Intercept)  0.00382 0.00123
+## 
+## Correlation: Structure = exchangeable  Link = identity 
+## 
+## Estimated Correlation Parameters:
+##       Estimate Std.err
+## alpha    0.929  0.0265
+## Number of clusters:   25   Maximum cluster size: 8
 </pre></div>
 <div class="source"><pre class="knitr r">
 
@@ -124,18 +123,14 @@ myGEE.stat <- function(y) {
 	return(df)
 }
 geeEx.stat <- lapply(geeEx, myGEE.stat)
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeEx' not found
-</pre></div>
-<div class="source"><pre class="knitr r">save(geeEx.stat, file=file.path(wdir, "geeEx.stat.Rdata"))
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeEx.stat' not found
-</pre></div>
-<div class="source"><pre class="knitr r">
+save(geeEx.stat, file=file.path(wdir, "geeEx.stat.Rdata"))
+
 ## Show an example:
 geeEx.stat[[1]]
 </pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeEx.stat' not found
+<div class="output"><pre class="knitr r">##      coef estimate  stderr    wald  pval
+## 1 region2  0.00707 0.00623    1.29 0.256
+## 2   alpha  0.92946 0.02653 1227.66 0.000
 </pre></div>
 </div></div>
 
@@ -153,14 +148,14 @@ geeEx.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:20:03 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:26:58 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 0.489 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 40.2 secs
 </pre></div>
 </div></div>
 
