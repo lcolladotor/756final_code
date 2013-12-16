@@ -123,8 +123,7 @@ Why?
 <<"clusterExample", echo=FALSE, out.width='.9\\textwidth', fig.width=20, fig.height=10>>=
 library("ggplot2")
 suppressMessages(library("ggbio"))
-suppressMessages(library("GenomicRanges
-"))
+suppressMessages(library("GenomicRanges"))
 load("../results/derHippo/chr6/figure/p.Rdata")
 print(p)
 @
