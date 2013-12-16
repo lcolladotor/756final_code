@@ -123,7 +123,8 @@ Why?
 <<"clusterExample", echo=FALSE, out.width='.9\\textwidth', fig.width=20, fig.height=10>>=
 library("ggplot2")
 suppressMessages(library("ggbio"))
-suppressMessages(library("GenomicRanges"))
+suppressMessages(library("GenomicRanges
+"))
 load("../results/derHippo/chr6/figure/p.Rdata")
 print(p)
 @
@@ -273,7 +274,7 @@ summary(gfit.ar)
 \section{Results}
 
 \begin{frame}[fragile]
-	\frametitle{RMSPE chr6}
+	\frametitle{Root mean squared prediction error (RMSPE) chr6}
 	
 <<"rmspe", echo=FALSE, out.width='.5\\linewidth'>>=
 load("../results/derHippo/chr6/rmspe/rmspe.all.Rdata")
