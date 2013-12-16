@@ -29,6 +29,10 @@ library("ggplot2")
 # source("http://bioconductor.org/biocLite.R")
 # biocLite("qvalue")
 library("qvalue")
+
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("GenomicRanges")
+library("GenomicRanges")
 </pre></div>
 </div></div>
 
@@ -185,7 +189,6 @@ for(i in c("AR1", "Ind", "Ex")) {
 pvals$qval <- qvals
 pvals$pvalSig <- pvals$pval < 0.05
 pvals$qvalSig <- pvals$qval < 0.10
-save(pvals, file=file.path(wdir, "pvals.Rdata"))
 </pre></div>
 </div></div>
 
@@ -229,122 +232,104 @@ abline(0, 1, col="red")
 
 # Region pairs and exons
 
-<div class="chunk" id="pairsExons"><div class="rcode"><div class="source"><pre class="knitr r">load(file.path(ddir, "ov.Rdata"))
+<div class="chunk" id="pairsExons"><div class="rcode"><div class="source"><pre class="knitr r">load(file.path(ddir, "pairs.Rdata"))
+load(file.path(ddir, "exons.Rdata"))
+## Per region pair, find which exons they overlap
+## Then classify if they overlap the same exon or different ones
 
-## Regions and exons: number of region pairs per exon
-ov.df <- as.data.frame(ov.mat)
-ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$pairID)] )
-ex.tab
+ex.info <- lapply(unique(pvals$pairID), function(x) {
+	reg <- GRanges(seqnames=rep(chr, 2), ranges=IRanges(start=c(pairs$start1[x], pairs$start2[x]), end=c(pairs$end1[x], pairs$end2[x])))
+	ov <- findOverlaps(reg, exons)
+	if(!all(c(1, 2) %in% queryHits(ov))) {
+		return("no-exons")
+	} else if(any(duplicated(subjectHits(ov))) & all(c(1, 2) %in% queryHits(ov))) {
+		return("same-exon")
+	} else {
+		return("diff-exon")
+	}
+})
+names(ex.info) <- unique(pvals$pairID)
+ex.info <- unlist(ex.info)
+table(ex.info)
 </pre></div>
-<div class="output"><pre class="knitr r">## 
-##    92    94   277   518   546   707  1042  1045  1086  1092  1121  1145 
-##     1     1     2     1     1     3     1     1     2     1     2     3 
-##  1168  1195  1300  1305  1306  1307  1317  1367  1372  1373  1575  1617 
-##     3     1     1     1     1     1     1     3     6     2     3     1 
-##  1622  1623  1668  1670  1671  1672  1676  1678  1679  1724  1871  1882 
-##     3     2     2     1     2     1     1     1     3     1     1     6 
-##  1885  2016  2017  2018  2091  2094  2121  2196  2317  2323  2325  2336 
-##     1     1     2     2     1     1     2     1     3     1     1     4 
-##  2447  2486  2525  2526  2565  2572  2573  2574  2581  2630  2748  2839 
-##     2     2     3     1     2     2     2     8     2     2     2     1 
-##  2841  2847  2850  3057  3349  3917  3971  3979  3990  4114  4132  4177 
-##     3     1     3     1     1     2     2     5     1     2     2     2 
-##  4183  4245  4331  5962  5969  5971  6027  6057  6245  6257  6452  6623 
-##     4     1     3     2     2     1     2     1     2     2     4     3 
-##  6794  7022  7023  7032  7047  7049  7051  7081  7083  7109  7140  7244 
-##     4     3     2     2     1     1     1     1     1     1     1     1 
-##  7592  7593  7639  7655  7657  7770  7772  7776  7783  7786  7787  7795 
-##     1     1     1     1     1     1     1    18     2     2     2     1 
-##  7984  8038  8040  8041  8094  8121  8267  8338  8339  8719  8765  8877 
-##     1     3     2     1     2     1     4     3     1     1     3     3 
-##  8891  9003  9172  9174  9175  9176  9177  9178  9259  9261  9262  9263 
-##     2     2     1     2     1     1     1     1     1     4     1     9 
-##  9337  9439  9553  9563  9664  9879 10101 10121 10232 10332 10334 10434 
-##     2     1     1     1     1     2     1     2     1     1     1     1 
-## 10435 10626 10627 
-##     2     2     1
+<div class="output"><pre class="knitr r">## ex.info
+## diff-exon  no-exons same-exon 
+##        14        10       276
 </pre></div>
-<div class="source"><pre class="knitr r">## Exons with more than 1 region
-idx.ex <- as.integer(names(ex.tab)[ ex.tab > 1])
-ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$pairID) & ov.df$subjectHits %in% idx.ex, ]
-save(ex.use, file=file.path(wdir, "ex.use.Rdata"))
-head(ex.use)
-</pre></div>
-<div class="output"><pre class="knitr r">##    queryHits subjectHits
-## 1          1        5962
-## 4          4        5962
-## 20        16        5969
-## 22        17        5969
-## 28        23        6027
-## 29        24        6027
-</pre></div>
-<div class="source"><pre class="knitr r">
-## How many pairs were "linked"?
-pvals.ex <- subset(pvals, pairID %in% ex.use$queryHits)
-save(pvals.ex, file=file.path(wdir, "pvals.ex.Rdata"))
+<div class="source"><pre class="knitr r">pvals$exonStatus <- factor(rep(ex.info, each=3), c("no-exons", "diff-exon", "same-exon"))
+save(pvals, file=file.path(wdir, "pvals.Rdata"))
 </pre></div>
 </div></div>
 
 
-<div class="chunk" id="pairsExonsEDA"><div class="rcode"><div class="source"><pre class="knitr r">ggplot(pvals.ex, aes(x=method, y=pval)) + geom_violin()
+<div class="chunk" id="pairsExonsEDA"><div class="rcode"><div class="source"><pre class="knitr r">ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(exonStatus~.)
 </pre></div>
 <div class="rimage default"><img src="figure/pairsExonsEDA1.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(pvals.ex, aes(x=method, y=qval)) + geom_violin()
+<div class="source"><pre class="knitr r">ggplot(pvals, aes(x=method, y=qval)) + geom_violin() + facet_grid(exonStatus~.)
 </pre></div>
 <div class="rimage default"><img src="figure/pairsExonsEDA2.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
 <div class="source"><pre class="knitr r">
-plot(pvals.ex$qval[pvals.ex$method=="Ind"], pvals.ex$qval[pvals.ex$method=="AR1"])
-abline(0, 1, col="red")
+ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point() + facet_grid(exonStatus~.)
 </pre></div>
 <div class="rimage default"><img src="figure/pairsExonsEDA3.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(subset(pvals.ex, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
-</pre></div>
-<div class="rimage default"><img src="figure/pairsExonsEDA4.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
 <div class="source"><pre class="knitr r">
-## Judging by p-value
-tapply(pvals.ex$pvalSig, pvals.ex$method, summary)
+## By exon status
+
+comp.status <- vector("list", 3)
+names(comp.status) <- c("no-exons", "diff-exon", "same-exon")
+for(ex.status in names(comp.status)) {
+	
+	## Judging by p-value
+	x11 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, method, summary))
+	casesPval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, pairID, as.integer)))
+	x12 <- table(apply(casesPval, 1, paste, collapse="-"))
+
+	## Judging by q-value
+	x21 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, method, summary))
+	casesQval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, pairID, as.integer)))
+	x22 <- table(apply(casesQval, 1, paste, collapse="-"))
+	comp.status[[ex.status]] <- list(pval=list(x11, x12), qval=list(x21, x22))
+}
+
+## Agreement between AR1 and Ind by exon status. 0 means that it was not significant, 1 that it was.
+## By pvalue
+lapply(comp.status, function(x) { x$pval[[2]]})
 </pre></div>
-<div class="output"><pre class="knitr r">## $AR1
-##    Mode   FALSE    TRUE    NA's 
-## logical      51     163       0 
+<div class="output"><pre class="knitr r">## $`no-exons`
 ## 
-## $Ex
-##    Mode   FALSE    TRUE    NA's 
-## logical      47     167       0 
+## 0-0 0-1 1-0 1-1 
+##   1   3   1   5 
 ## 
-## $Ind
-##    Mode   FALSE    TRUE    NA's 
-## logical      47     167       0
+## $`diff-exon`
+## 
+## 0-0 0-1 1-1 
+##   1   1  12 
+## 
+## $`same-exon`
+## 
+## 0-0 0-1 1-0 1-1 
+##  48  34  31 163
 </pre></div>
-<div class="source"><pre class="knitr r">casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$pairID, as.integer))
-table(apply(casesPval, 1, paste, collapse="-"))
+<div class="source"><pre class="knitr r">## By qvalue
+lapply(comp.status, function(x) { x$qval[[2]]})
 </pre></div>
-<div class="output"><pre class="knitr r">## 
-## 0-0-0 0-1-1 1-0-0 1-1-1 
-##    26    25    21   142
+<div class="output"><pre class="knitr r">## $`no-exons`
+## 
+## 0-1 1-0 1-1 
+##   1   2   7 
+## 
+## $`diff-exon`
+## 
+## 0-1 1-1 
+##   1  13 
+## 
+## $`same-exon`
+## 
+## 0-0 0-1 1-0 1-1 
+##  19  24  23 210
 </pre></div>
 <div class="source"><pre class="knitr r">
-## Judging by q-value
-tapply(pvals.ex$qvalSig, pvals.ex$method, summary)
-</pre></div>
-<div class="output"><pre class="knitr r">## $AR1
-##    Mode   FALSE    TRUE    NA's 
-## logical      27     187       0 
-## 
-## $Ex
-##    Mode   FALSE    TRUE    NA's 
-## logical      21     193       0 
-## 
-## $Ind
-##    Mode   FALSE    TRUE    NA's 
-## logical      21     193       0
-</pre></div>
-<div class="source"><pre class="knitr r">casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$pairID, as.integer))
-table(apply(casesQval, 1, paste, collapse="-"))
-</pre></div>
-<div class="output"><pre class="knitr r">## 
-## 0-0-0 0-1-1 1-0-0 1-1-1 
-##     8    19    13   174
+save(comp.status, file=file.path(wdir, "comp.status.Rdata"))
 </pre></div>
 </div></div>
 
@@ -364,14 +349,14 @@ table(apply(casesQval, 1, paste, collapse="-"))
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 11:19:44 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 13:44:49 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 14.12 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 40.94 secs
 </pre></div>
 </div></div>
 
@@ -385,12 +370,14 @@ Wallclock time spent generating the report.
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
-## [1] methods   stats     graphics  grDevices utils     datasets  base     
+## [1] parallel  methods   stats     graphics  grDevices utils     datasets 
+## [8] base     
 ## 
 ## other attached packages:
-## [1] qvalue_1.36.0        ggplot2_0.9.3.1      geepack_1.1-6       
-## [4] cvTools_0.3.2        robustbase_0.9-10    lattice_0.20-24     
-## [7] knitrBootstrap_0.9.0 getopt_1.20.0       
+##  [1] GenomicRanges_1.14.3 XVector_0.2.0        IRanges_1.20.6      
+##  [4] BiocGenerics_0.8.0   qvalue_1.36.0        ggplot2_0.9.3.1     
+##  [7] geepack_1.1-6        cvTools_0.3.2        robustbase_0.9-10   
+## [10] lattice_0.20-24      knitrBootstrap_0.9.0 getopt_1.20.0       
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Cairo_1.5-3        colorspace_1.2-4   dichromat_2.0-0   
@@ -399,7 +386,8 @@ Wallclock time spent generating the report.
 ## [10] labeling_0.2       markdown_0.6.3     MASS_7.3-29       
 ## [13] munsell_0.4.2      plyr_1.8           proto_0.3-10      
 ## [16] RColorBrewer_1.0-5 reshape2_1.2.2     scales_0.2.3      
-## [19] stringr_0.6.2      tcltk_3.0.2        tools_3.0.2
+## [19] stats4_3.0.2       stringr_0.6.2      tcltk_3.0.2       
+## [22] tools_3.0.2
 </pre></div>
 </div></div>
 
