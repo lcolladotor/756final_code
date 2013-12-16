@@ -23,6 +23,10 @@ library("geepack")
 # install.packages("ggplot2")
 library("ggplot2")
 
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("qvalue")
+library("qvalue")
+
 
 ## Specify parameters
 spec <- matrix(c(
