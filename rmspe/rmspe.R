@@ -1,7 +1,7 @@
 ## --- Basic description of what this step does
 
 ## Example usage:
-# Rscript template.R  -p 'derHippo' -d '/Users/lcollado/enigma2/756final_code/results' -c '22' -r 'templateStep' -v TRUE
+# Rscript rmspe.R  -p 'derHippo' -d '/Users/lcollado/enigma2/756final_code/results' -c '22' -r 'rmspe' -v TRUE
 
 ## Load libraries
 
@@ -40,7 +40,7 @@ if(test){
 	opt$project <- "derHippo"
 	opt$dirResult <- "/home/bst/student/lcollado/756final_code/results"
 	opt$chrnum <- "22"
-	opt$results <- "templateStep"
+	opt$results <- "rmspe"
 	opt$verbose <- NULL
 }
 
@@ -63,7 +63,7 @@ dir.create(reportdir, recursive=TRUE)
 
 codedir <- getwd()
 setwd(reportdir)
-knit_bootstrap(file.path(codedir, "template.Rmd"), output=file.path(reportdir, "reportName.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=TRUE) # show_code=FALSE is specially useful for results with interpretation
+knit_bootstrap(file.path(codedir, "rmspe.Rmd"), output=file.path(reportdir, "rmspe.html"), code_style='Brown Paper', chooser=c('boot', 'code'), show_code=TRUE) # show_code=FALSE is specially useful for results with interpretation
 
 ## Done
 if(opt$verbose) {

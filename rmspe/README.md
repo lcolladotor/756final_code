@@ -1,2 +1,2 @@
-Calculate RMPSE
+Calculate RMSPE
 ================
