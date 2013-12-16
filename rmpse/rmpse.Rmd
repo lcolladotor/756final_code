@@ -1,0 +1,97 @@
+Template report
+=====================
+
+# Setup
+
+## Libraries
+
+```{r "setup"}
+## Load libraries
+## Available from http://cran.r-project.org/web/packages/getopt/index.html
+# install.packages("getopt")
+library("getopt")
+
+## Available from http://cran.at.r-project.org/web/packages/knitrBootstrap/index.html
+# install.packages("knitrBootstrap")
+library("knitrBootstrap")
+
+# --- Specify any other libraries you need
+# --- Not needed (since you load them in template.R), but good for the report
+# --- Anyhow, just copying and pasting from template.R is good
+```
+
+## Directories
+
+```{r "directories"}
+## Chr
+chr <- paste0("chr", opt$chrnum)
+chrnum <- as.numeric(opt$chrnum)
+
+## Create dir to save files
+if(opt$verbose) message("Creating directories")
+ddir <- file.path(opt$dirResult, opt$project, chr) # data directory (might change say if step2 uses the results from step2)
+wdir <- file.path(opt$dirResult, opt$project, chr, opt$results) # working dir
+dir.create(wdir, recursive=TRUE)
+
+## Want to save some 'object'? Use:
+# save(object, file=file.path(wdir, "object.Rdata"))
+```
+
+
+
+
+Edit this part
+
+
+# Some section
+
+```{r "chunkName"}
+## Code goes here
+```
+
+## Some subsection
+
+```{r "anotherChunkWithFig", dev="CairoPNG"}
+## dev="CairoPNG" needed when running on the cluster since the default doesn't work
+# plot(1:10, 10:1)
+```
+
+### Some sub-sub-section
+
+Knew to Markdown? Check [this guide](http://www.rstudio.com/ide/docs/r_markdown).
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Reproducibility
+
+Date the report was generated.
+
+```{r "reproducibility1", echo=FALSE}
+## Date the report was generated
+Sys.time()
+```
+
+Wallclock time spent generating the report.
+
+```{r "reproducibility2", echo=FALSE}
+## Processing time in seconds
+totalTime <- diff(c(startTime, Sys.time()))
+round(totalTime, digits=3)
+```
+
+`R` session information.
+
+```{r "reproducibility3", echo=FALSE}
+## Session info
+sessionInfo()
+```
