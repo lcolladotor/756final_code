@@ -60,7 +60,7 @@
 % knitr options
 <<setup, include=FALSE, cache=FALSE>>=
 # set global chunk options
-opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.8\\linewidth', cache=TRUE)
+opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.4\\linewidth', cache=TRUE)
 options(width=70)
 @
 
@@ -119,13 +119,16 @@ Why?
 
 \begin{frame}[fragile]
   \frametitle{Example region cluster (by distance)}
-  \begin{figure}[htbp] 
-  \begin{centering}   
-  \includegraphics[height=0.45\textwidth, width=0.90\textwidth]{../results/derHippo/chr6/figure/plotCluster.png}
-  \end{centering} 
-  \end{figure}
-\end{frame}
 
+<<"clusterExample", echo=FALSE, out.width='.9\\textwidth', fig.width=20, fig.height=10>>=
+library("ggplot2")
+suppressMessages(library("ggbio"))
+suppressMessages(library("GenomicRanges"))
+load("../results/derHippo/chr6/figure/p.Rdata")
+print(p)
+@
+
+\end{frame}
 
 \subsection{Question}
 
@@ -137,8 +140,8 @@ Why?
 Are two adjacent regions \emph{similar}?
 
 \begin{enumerate}
-	\item Can we link them?
-	\item a
+	\item Can we \emph{link} them?
+	\item Are regions overlapping the same exon more frequently \emph{linked}?
 \end{enumerate}
 
 \end{frame}
@@ -177,9 +180,9 @@ Consider a region pair:
 \frametitle{Proposed method}
 
 Model for sample $i$:
-
+\Large
 \[ \log_2( Y_{ijk} + 32) =  \alpha + \beta_1 \text{sampleDepth}_i + \bbeta_{2} \text{group}_j + \bbeta_{3} \text{region}_k + \epsilon \]
-
+\normalsize
 Using \emph{region1} as the reference, we want to test $\bbeta_3\left( \text{region}_2 \right) = 0$.
 
 \end{frame}
@@ -190,21 +193,29 @@ Using \emph{region1} as the reference, we want to test $\bbeta_3\left( \text{reg
 \section{Example}
 
 \begin{frame}
-\frametitle{derHippo chr 6}
+\frametitle{Data sets used}
 
 \begin{itemize}
+	\item \textbf{derHippo}: RNA-seq brain hippocampus study
 	\item 25 samples
 	\item 3 groups: CO, ETOH and CT
-	\item 890 pairs; most short:
 	\begin{itemize}
-		\item $\sim$ 32\% with all regions (1, M, 2) having a width greater than 1
-		\item $\sim$ 18\% greater with all widths greater than 2
+		\item[chr6] 890 pairs \\ 300 ($\sim$ 33.7\%) with regions 1 \& 2 having a width greater than 1, region M $<$ 250
+		\item[chr22] 573 pairs \\ 187 ($\sim$ 32.6\%) passing the filtering
 	\end{itemize}
-	\item Chose the largest cluster, then the pair starting with the largest region from the cluster.
 \end{itemize}
-	
 
+\alert{Example}: \\ chr 6, chose the largest cluster, then the pair starting with the largest region from the cluster.
 \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example region cluster}
+<<"reUseCluster", echo=FALSE, out.width='.9\\textwidth', fig.width=20, fig.height=10>>=
+print(p)
+@
+\end{frame}
+
+
 
 \begin{frame}[fragile]
 \frametitle{Data}
@@ -251,16 +262,103 @@ gfit.ar <- geeglm(formula = coverage ~ sampleDepth + group + region, family = ga
 @
 
 \tiny
-<<"geeexres">>=
+<<"geeexres", echo=FALSE>>=
 summary(gfit.ar)
 @
 \normalsize
 \end{frame}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}
+
+\begin{frame}[fragile]
+	\frametitle{RMSPE chr6}
+	
+<<"rmspe", echo=FALSE, out.width='.5\\linewidth'>>=
+load("../results/derHippo/chr6/rmspe/rmspe.all.Rdata")
+print(ggplot(rmspe.all, aes(x=method, y=rmspe)) + geom_violin())
+@
+
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+	\frametitle{RMSPE chr6: GEE AR1 vs GEE Ind}
+
+<<"rmspeAR1vsInd", echo=FALSE, out.width='.5\\linewidth'>>=
+plot(rmspe.all$rmspe[rmspe.all$method=="Ind"], rmspe.all$rmspe[rmspe.all$method=="AR1"], ylab="RMSPE GEE AR1", xlab="RMSPE GEE Ind", main="RMSPE")
+abline(0, 1, col="red")
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{SE RMSPE chr6: GEE AR1 vs GEE Ind}
+
+<<"rmspeAR1vsIndSE", echo=FALSE, out.width='.5\\linewidth'>>=
+plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="AR1"], ylab="se(RMSPE GEE AR1)", xlab="se(RMSPE GEE Ind)", main="SE of the RMSPE")
+abline(0, 1, col="red")
+@
+
+
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{P-values by exon status: chr6}
+
+<<"pvalsExonStatus", echo=FALSE, out.width='.5\\linewidth'>>=
+load("../results/derHippo/chr6/rmspe/pvals.Rdata")
+print(ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(exonStatus~.))
+@
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+	\frametitle{Test result by exon status}
+
+\begin{itemize}
+	\item Adjust for multiple testing by using q-value $<$ 0.10
+\end{itemize}
+
+<<"exonStatus", echo=FALSE, results="asis">>=
+load("../results/derHippo/chr6/rmspe/comp.status.Rdata")
+c6 <- comp.status
+load("../results/derHippo/chr22/rmspe/comp.status.Rdata")
+comp <- list("chr6"=c6, "chr22"=comp.status)
+
+df <- data.frame("BothAccept"=rep(0, 6), "Ar1Accept"=rep(0, 6), "IndAccept"=rep(0, 6), "BothReject"=rep(0, 6), chr=rep(names(comp), each=3), ExonStatus=rep(names(comp.status), 2))
+i <- 1
+for(chr in unique(df$chr)) {
+	for(status in unique(df$ExonStatus)) {
+		current <- comp[[chr]][[status]]$qval[[2]]
+		df[i, 1] <- ifelse(is.na(current["0-0"]), 0, current["0-0"])
+		df[i, 2] <- ifelse(is.na(current["0-1"]), 0, current["0-1"])
+		df[i, 3] <- ifelse(is.na(current["1-0"]), 0, current["1-0"])
+		df[i, 4] <- ifelse(is.na(current["1-1"]), 0, current["1-1"])
+		i <- i + 1	
+	}
+}
+library(xtable)
+print(xtable(df, digits=0, align="c|c|c|c|c|c|c|"), include.rownames=FALSE)
+@
+
+\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{End}
+
+\begin{frame}
+\frametitle{Conclusions}
+
+\begin{itemize}
+	\item With longer region pairs, fitting GEE takes a significant amount of time.
+	\item GEE with Independence working correlation had lower RMSPE.
+	\item For pairs sharing an exon, 11-20\% were linked.
+\end{itemize}
+\end{frame}
 
 \begin{frame}
 \frametitle{References}
