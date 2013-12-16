@@ -14,6 +14,14 @@ library("getopt")
 library("knitrBootstrap")
 
 # --- Specify any other libraries you need
+# install.packages("cvTools")
+library("cvTools")
+
+# install.packages("geepack")
+library("geepack")
+
+# install.packages("ggplot2")
+library("ggplot2")
 
 
 ## Specify parameters

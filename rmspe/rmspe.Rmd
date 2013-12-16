@@ -1,4 +1,4 @@
-Template report
+Calculate RMSPE
 =====================
 
 # Setup
@@ -18,6 +18,14 @@ library("knitrBootstrap")
 # --- Specify any other libraries you need
 # --- Not needed (since you load them in template.R), but good for the report
 # --- Anyhow, just copying and pasting from template.R is good
+# install.packages("cvTools")
+library("cvTools")
+
+# install.packages("geepack")
+library("geepack")
+
+# install.packages("ggplot2")
+library("ggplot2")
 ```
 
 ## Directories
@@ -40,25 +48,54 @@ dir.create(wdir, recursive=TRUE)
 
 
 
-Edit this part
+# RMSPE
 
-
-# Some section
-
-```{r "chunkName"}
-## Code goes here
+```{r "loadData"}
+load(file.path(ddir, "geeAR1", "geeAR1.Rdata"))
+load(file.path(ddir, "geeInd", "geeInd.Rdata"))
+load(file.path(ddir, "geeEx", "geeEx.Rdata"))
 ```
 
-## Some subsection
+## Calculate the RMSPE
 
-```{r "anotherChunkWithFig", dev="CairoPNG"}
-## dev="CairoPNG" needed when running on the cluster since the default doesn't work
-# plot(1:10, 10:1)
+```{r "rmspe"}
+rmspe.all <- vector("list", length(geeAR1))
+names(rmspe.all) <- names(geeAR1)
+
+rmspe.all <- lapply(names(rmspe.all), function(x) {
+	ar <- unlist(rmspe(y=geeAR1[[x]]$y, yHat=geeAR1[[x]]$fitted.values, includeSE=TRUE))
+	ind <- unlist(rmspe(y=geeInd[[x]]$y, yHat=geeInd[[x]]$fitted.values, includeSE=TRUE))
+	ex <- unlist(rmspe(y=geeEx[[x]]$y, yHat=geeEx[[x]]$fitted.values, includeSE=TRUE))
+	df <- data.frame(rbind(ar, ind, ex))
+	df$method <- factor(c("AR1", "Ind", "Ex"))
+	df$cluster <- rep(as.integer(x), 3)
+	rownames(df) <- NULL
+	return(df)
+})
+rmspe.all <- do.call(rbind, rmspe.all)
+save(rmspe.all, file=file.path(wdir, "rmspe.all.Rdata"))
 ```
 
-### Some sub-sub-section
+## Explore the results
 
-Knew to Markdown? Check [this guide](http://www.rstudio.com/ide/docs/r_markdown).
+```{r "rmspeEDA", device="CairoPNG"}
+ggplot(rmspe.all, aes(x=method, y=rmspe)) + geom_violin()
+ggplot(rmspe.all, aes(x=method, y=se)) + geom_violin()
+plot(rmspe.all$rmspe[rmspe.all$method=="Ind"], rmspe.all$rmspe[rmspe.all$method=="Ex"])
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="Ind"], rmspe.all$rmspe[rmspe.all$method=="AR1"])
+abline(0, 1, col="red")
+plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="Ex"])
+abline(0, 1, col="red")
+plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="AR1"])
+abline(0, 1, col="red")
+ggplot(subset(rmspe.all, method!="Ex"), aes(x=rmspe, y=se, color=method)) + geom_point()
+ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=rmspe, color=method)) + geom_point()
+ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=se, color=method)) + geom_point()
+tapply(rmspe.all$rmspe, rmspe.all$method, summary)
+tapply(rmspe.all$se, rmspe.all$method, summary)
+```
+
 
 
 
