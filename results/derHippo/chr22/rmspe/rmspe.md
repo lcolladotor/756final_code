@@ -185,7 +185,7 @@ for(i in c("AR1", "Ind", "Ex")) {
 pvals$qval <- qvals
 pvals$pvalSig <- pvals$pval < 0.05
 pvals$qvalSig <- pvals$qval < 0.10
-save(pvals, file=file.path(wdir, "rmspe.all.Rdata"))
+save(pvals, file=file.path(wdir, "pvals.Rdata"))
 </pre></div>
 </div></div>
 
@@ -352,14 +352,14 @@ table(apply(casesQval, 1, paste, collapse="-"))
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 02:03:08 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 11:19:20 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 10.15 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 10.23 secs
 </pre></div>
 </div></div>
 
