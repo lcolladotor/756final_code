@@ -72,7 +72,7 @@ rmspe.all <- lapply(names(rmspe.all), function(x) {
 	ex <- unlist(rmspe(y=geeEx[[x]]$y, yHat=geeEx[[x]]$fitted.values, includeSE=TRUE))
 	df <- data.frame(rbind(ar, ind, ex))
 	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$cluster <- rep(as.integer(x), 3)
+	df$pairID <- rep(as.integer(x), 3)
 	rownames(df) <- NULL
 	return(df)
 })
@@ -94,8 +94,8 @@ abline(0, 1, col="red")
 plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="AR1"])
 abline(0, 1, col="red")
 ggplot(subset(rmspe.all, method!="Ex"), aes(x=rmspe, y=se, color=method)) + geom_point()
-ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=rmspe, color=method)) + geom_point()
-ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=se, color=method)) + geom_point()
+ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=rmspe, color=method)) + geom_point()
+ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=se, color=method)) + geom_point()
 tapply(rmspe.all$rmspe, rmspe.all$method, summary)
 tapply(rmspe.all$se, rmspe.all$method, summary)
 ```
@@ -119,7 +119,7 @@ pvals <- lapply(names(pvals), function(x) {
 	ex <- geeEx.stat[[x]]$pval[1]
 	df <- data.frame(pval=c(ar, ind, ex))
 	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$cluster <- rep(as.integer(x), 3)
+	df$pairID <- rep(as.integer(x), 3)
 	return(df)
 })
 pvals <- do.call(rbind, pvals)
@@ -141,7 +141,7 @@ plot(pvals$qval[pvals$method=="Ind"], pvals$qval[pvals$method=="Ex"])
 abline(0, 1, col="red")
 plot(pvals$qval[pvals$method=="Ind"], pvals$qval[pvals$method=="AR1"])
 abline(0, 1, col="red")
-ggplot(subset(pvals, method!="Ex"), aes(x=cluster, y=qval, colour=method)) + geom_point()
+ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
 ```
 
 # Region pairs and exons
@@ -151,16 +151,16 @@ load(file.path(ddir, "ov.Rdata"))
 
 ## Regions and exons: number of region pairs per exon
 ov.df <- as.data.frame(ov.mat)
-ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$cluster)] )
+ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$pairID)] )
 ex.tab
 ## Exons with more than 1 region
 idx.ex <- as.integer(names(ex.tab)[ ex.tab > 1])
-ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$cluster) & ov.df$subjectHits %in% idx.ex, ]
+ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$pairID) & ov.df$subjectHits %in% idx.ex, ]
 save(ex.use, file=file.path(wdir, "ex.use.Rdata"))
 head(ex.use)
 
 ## How many pairs were "linked"?
-pvals.ex <- subset(pvals, cluster %in% ex.use$queryHits)
+pvals.ex <- subset(pvals, pairID %in% ex.use$queryHits)
 save(pvals.ex, file=file.path(wdir, "pvals.ex.Rdata"))
 
 ```
@@ -171,16 +171,16 @@ ggplot(pvals.ex, aes(x=method, y=qval)) + geom_violin()
 
 plot(pvals.ex$qval[pvals.ex$method=="Ind"], pvals.ex$qval[pvals.ex$method=="AR1"])
 abline(0, 1, col="red")
-ggplot(subset(pvals.ex, method!="Ex"), aes(x=cluster, y=qval, colour=method)) + geom_point()
+ggplot(subset(pvals.ex, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
 
 ## Judging by p-value
 tapply(pvals.ex$pvalSig, pvals.ex$method, summary)
-casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$cluster, as.integer))
+casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$pairID, as.integer))
 table(apply(casesPval, 1, paste, collapse="-"))
 
 ## Judging by q-value
 tapply(pvals.ex$qvalSig, pvals.ex$method, summary)
-casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$cluster, as.integer))
+casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$pairID, as.integer))
 table(apply(casesQval, 1, paste, collapse="-"))
 ```
 

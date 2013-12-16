@@ -82,7 +82,7 @@ rmspe.all <- lapply(names(rmspe.all), function(x) {
 	ex <- unlist(rmspe(y=geeEx[[x]]$y, yHat=geeEx[[x]]$fitted.values, includeSE=TRUE))
 	df <- data.frame(rbind(ar, ind, ex))
 	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$cluster <- rep(as.integer(x), 3)
+	df$pairID <- rep(as.integer(x), 3)
 	rownames(df) <- NULL
 	return(df)
 })
@@ -119,10 +119,10 @@ abline(0, 1, col="red")
 <div class="source"><pre class="knitr r">ggplot(subset(rmspe.all, method!="Ex"), aes(x=rmspe, y=se, color=method)) + geom_point()
 </pre></div>
 <div class="rimage default"><img src="figure/rmspeEDA7.png" title="plot of chunk rmspeEDA" alt="plot of chunk rmspeEDA" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=rmspe, color=method)) + geom_point()
+<div class="source"><pre class="knitr r">ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=rmspe, color=method)) + geom_point()
 </pre></div>
 <div class="rimage default"><img src="figure/rmspeEDA8.png" title="plot of chunk rmspeEDA" alt="plot of chunk rmspeEDA" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(subset(rmspe.all, method!="Ex"), aes(x=cluster, y=se, color=method)) + geom_point()
+<div class="source"><pre class="knitr r">ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=se, color=method)) + geom_point()
 </pre></div>
 <div class="rimage default"><img src="figure/rmspeEDA9.png" title="plot of chunk rmspeEDA" alt="plot of chunk rmspeEDA" class="plot" /></div>
 <div class="source"><pre class="knitr r">tapply(rmspe.all$rmspe, rmspe.all$method, summary)
@@ -174,7 +174,7 @@ pvals <- lapply(names(pvals), function(x) {
 	ex <- geeEx.stat[[x]]$pval[1]
 	df <- data.frame(pval=c(ar, ind, ex))
 	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$cluster <- rep(as.integer(x), 3)
+	df$pairID <- rep(as.integer(x), 3)
 	return(df)
 })
 pvals <- do.call(rbind, pvals)
@@ -192,7 +192,7 @@ save(pvals, file=file.path(wdir, "rmspe.all.Rdata"))
 
 <div class="chunk" id="explorePvals"><div class="rcode"><div class="source"><pre class="knitr r">summary(pvals)
 </pre></div>
-<div class="output"><pre class="knitr r">##       pval        method       cluster         qval        
+<div class="output"><pre class="knitr r">##       pval        method        pairID         qval        
 ##  Min.   :0.0000   AR1:187   Min.   :  9   Min.   :0.00000  
 ##  1st Qu.:0.0000   Ex :187   1st Qu.:189   1st Qu.:0.00000  
 ##  Median :0.0002   Ind:187   Median :301   Median :0.00007  
@@ -221,7 +221,7 @@ abline(0, 1, col="red")
 abline(0, 1, col="red")
 </pre></div>
 <div class="rimage default"><img src="figure/explorePvals4.png" title="plot of chunk explorePvals" alt="plot of chunk explorePvals" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(subset(pvals, method!="Ex"), aes(x=cluster, y=qval, colour=method)) + geom_point()
+<div class="source"><pre class="knitr r">ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
 </pre></div>
 <div class="rimage default"><img src="figure/explorePvals5.png" title="plot of chunk explorePvals" alt="plot of chunk explorePvals" class="plot" /></div>
 </div></div>
@@ -233,7 +233,7 @@ abline(0, 1, col="red")
 
 ## Regions and exons: number of region pairs per exon
 ov.df <- as.data.frame(ov.mat)
-ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$cluster)] )
+ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$pairID)] )
 ex.tab
 </pre></div>
 <div class="output"><pre class="knitr r">## 
@@ -254,7 +254,7 @@ ex.tab
 </pre></div>
 <div class="source"><pre class="knitr r">## Exons with more than 1 region
 idx.ex <- as.integer(names(ex.tab)[ ex.tab > 1])
-ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$cluster) & ov.df$subjectHits %in% idx.ex, ]
+ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$pairID) & ov.df$subjectHits %in% idx.ex, ]
 save(ex.use, file=file.path(wdir, "ex.use.Rdata"))
 head(ex.use)
 </pre></div>
@@ -268,7 +268,7 @@ head(ex.use)
 </pre></div>
 <div class="source"><pre class="knitr r">
 ## How many pairs were "linked"?
-pvals.ex <- subset(pvals, cluster %in% ex.use$queryHits)
+pvals.ex <- subset(pvals, pairID %in% ex.use$queryHits)
 save(pvals.ex, file=file.path(wdir, "pvals.ex.Rdata"))
 </pre></div>
 </div></div>
@@ -285,7 +285,7 @@ plot(pvals.ex$qval[pvals.ex$method=="Ind"], pvals.ex$qval[pvals.ex$method=="AR1"
 abline(0, 1, col="red")
 </pre></div>
 <div class="rimage default"><img src="figure/pairsExonsEDA3.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
-<div class="source"><pre class="knitr r">ggplot(subset(pvals.ex, method!="Ex"), aes(x=cluster, y=qval, colour=method)) + geom_point()
+<div class="source"><pre class="knitr r">ggplot(subset(pvals.ex, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
 </pre></div>
 <div class="rimage default"><img src="figure/pairsExonsEDA4.png" title="plot of chunk pairsExonsEDA" alt="plot of chunk pairsExonsEDA" class="plot" /></div>
 <div class="source"><pre class="knitr r">
@@ -304,7 +304,7 @@ tapply(pvals.ex$pvalSig, pvals.ex$method, summary)
 ##    Mode   FALSE    TRUE    NA's 
 ## logical      33      92       0
 </pre></div>
-<div class="source"><pre class="knitr r">casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$cluster, as.integer))
+<div class="source"><pre class="knitr r">casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$pairID, as.integer))
 table(apply(casesPval, 1, paste, collapse="-"))
 </pre></div>
 <div class="output"><pre class="knitr r">## 
@@ -327,7 +327,7 @@ tapply(pvals.ex$qvalSig, pvals.ex$method, summary)
 ##    Mode   FALSE    TRUE    NA's 
 ## logical      17     108       0
 </pre></div>
-<div class="source"><pre class="knitr r">casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$cluster, as.integer))
+<div class="source"><pre class="knitr r">casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$pairID, as.integer))
 table(apply(casesQval, 1, paste, collapse="-"))
 </pre></div>
 <div class="output"><pre class="knitr r">## 
@@ -352,14 +352,14 @@ table(apply(casesQval, 1, paste, collapse="-"))
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 01:40:36 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-16 02:03:08 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 9.913 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 10.15 secs
 </pre></div>
 </div></div>
 
