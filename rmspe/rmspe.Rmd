@@ -30,6 +30,10 @@ library("ggplot2")
 # source("http://bioconductor.org/biocLite.R")
 # biocLite("qvalue")
 library("qvalue")
+
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("GenomicRanges")
+library("GenomicRanges")
 ```
 
 ## Directories
@@ -130,7 +134,7 @@ for(i in c("AR1", "Ind", "Ex")) {
 pvals$qval <- qvals
 pvals$pvalSig <- pvals$pval < 0.05
 pvals$qvalSig <- pvals$qval < 0.10
-save(pvals, file=file.path(wdir, "pvals.Rdata"))
+
 ```
 
 ```{r "explorePvals", dev="CairoPNG"}
@@ -147,41 +151,60 @@ ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom
 # Region pairs and exons
 
 ```{r "pairsExons"}
-load(file.path(ddir, "ov.Rdata"))
+load(file.path(ddir, "pairs.Rdata"))
+load(file.path(ddir, "exons.Rdata"))
+## Per region pair, find which exons they overlap
+## Then classify if they overlap the same exon or different ones
 
-## Regions and exons: number of region pairs per exon
-ov.df <- as.data.frame(ov.mat)
-ex.tab <- table(ov.df$subjectHits[ ov.df$queryHits %in% unique(pvals$pairID)] )
-ex.tab
-## Exons with more than 1 region
-idx.ex <- as.integer(names(ex.tab)[ ex.tab > 1])
-ex.use <- ov.df[ ov.df$queryHits %in% unique(pvals$pairID) & ov.df$subjectHits %in% idx.ex, ]
-save(ex.use, file=file.path(wdir, "ex.use.Rdata"))
-head(ex.use)
-
-## How many pairs were "linked"?
-pvals.ex <- subset(pvals, pairID %in% ex.use$queryHits)
-save(pvals.ex, file=file.path(wdir, "pvals.ex.Rdata"))
-
+ex.info <- lapply(unique(pvals$pairID), function(x) {
+	reg <- GRanges(seqnames=rep(chr, 2), ranges=IRanges(start=c(pairs$start1[x], pairs$start2[x]), end=c(pairs$end1[x], pairs$end2[x])))
+	ov <- findOverlaps(reg, exons)
+	if(!all(c(1, 2) %in% queryHits(ov))) {
+		return("no-exons")
+	} else if(any(duplicated(subjectHits(ov))) & all(c(1, 2) %in% queryHits(ov))) {
+		return("same-exon")
+	} else {
+		return("diff-exon")
+	}
+})
+names(ex.info) <- unique(pvals$pairID)
+ex.info <- unlist(ex.info)
+table(ex.info)
+pvals$exonStatus <- factor(rep(ex.info, each=3), c("no-exons", "diff-exon", "same-exon"))
+save(pvals, file=file.path(wdir, "pvals.Rdata"))
 ```
 
 ```{r "pairsExonsEDA", dev="CairoPNG"}
-ggplot(pvals.ex, aes(x=method, y=pval)) + geom_violin()
-ggplot(pvals.ex, aes(x=method, y=qval)) + geom_violin()
+ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(exonStatus~.)
+ggplot(pvals, aes(x=method, y=qval)) + geom_violin() + facet_grid(exonStatus~.)
 
-plot(pvals.ex$qval[pvals.ex$method=="Ind"], pvals.ex$qval[pvals.ex$method=="AR1"])
-abline(0, 1, col="red")
-ggplot(subset(pvals.ex, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
+ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point() + facet_grid(exonStatus~.)
 
-## Judging by p-value
-tapply(pvals.ex$pvalSig, pvals.ex$method, summary)
-casesPval <- do.call(rbind, tapply(pvals.ex$pvalSig, pvals.ex$pairID, as.integer))
-table(apply(casesPval, 1, paste, collapse="-"))
+## By exon status
 
-## Judging by q-value
-tapply(pvals.ex$qvalSig, pvals.ex$method, summary)
-casesQval <- do.call(rbind, tapply(pvals.ex$qvalSig, pvals.ex$pairID, as.integer))
-table(apply(casesQval, 1, paste, collapse="-"))
+comp.status <- vector("list", 3)
+names(comp.status) <- c("no-exons", "diff-exon", "same-exon")
+for(ex.status in names(comp.status)) {
+	
+	## Judging by p-value
+	x11 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, method, summary))
+	casesPval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, pairID, as.integer)))
+	x12 <- table(apply(casesPval, 1, paste, collapse="-"))
+
+	## Judging by q-value
+	x21 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, method, summary))
+	casesQval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, pairID, as.integer)))
+	x22 <- table(apply(casesQval, 1, paste, collapse="-"))
+	comp.status[[ex.status]] <- list(pval=list(x11, x12), qval=list(x21, x22))
+}
+
+## Agreement between AR1 and Ind by exon status. 0 means that it was not significant, 1 that it was.
+## By pvalue
+lapply(comp.status, function(x) { x$pval[[2]]})
+## By qvalue
+lapply(comp.status, function(x) { x$qval[[2]]})
+
+save(comp.status, file=file.path(wdir, "comp.status.Rdata"))
 ```
 
 

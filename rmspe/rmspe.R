@@ -27,6 +27,10 @@ library("ggplot2")
 # biocLite("qvalue")
 library("qvalue")
 
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("GenomicRanges")
+library("GenomicRanges")
+
 
 ## Specify parameters
 spec <- matrix(c(
