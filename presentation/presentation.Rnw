@@ -60,7 +60,7 @@
 % knitr options
 <<setup, include=FALSE, cache=FALSE>>=
 # set global chunk options
-opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.4\\linewidth', cache=TRUE)
+opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.4\\linewidth', cache=FALSE)
 options(width=70)
 @
 
@@ -209,10 +209,14 @@ Using \emph{region1} as the reference, we want to test $\bbeta_3\left( \text{reg
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Example region cluster}
+  \frametitle{Example region pair}
 <<"reUseCluster", echo=FALSE, out.width='.9\\textwidth', fig.width=20, fig.height=10>>=
-print(p)
+suppressMessages(library("GenomicRanges"))
+suppressMessages(library("ggbio"))
+g <- p + xlim(74227546, 74227934)
+print(g)
 @
+
 \end{frame}
 
 
@@ -256,7 +260,7 @@ head(covdata[[i2]], n=1)
 \frametitle{GEE - AR1}
 
 
-<<"geeex", echo=FALSE, message=FALSE, results="hide">>=
+<<"geeex", echo=FALSE, message=FALSE, results="hide", cache=TRUE>>=
 ## Fit gee with AR-1 corr
 gfit.ar <- geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, data = covdata[[i2]], id = sample, corstr = "ar1")
 @
@@ -357,6 +361,7 @@ print(xtable(df, digits=0, align="c|c|c|c|c|c|c|"), include.rownames=FALSE)
 	\item With longer region pairs, fitting GEE takes a significant amount of time.
 	\item GEE with Independence working correlation had lower RMSPE.
 	\item For pairs sharing an exon, 11-20\% were linked.
+	\item Method works, but is restrictive.
 \end{itemize}
 \end{frame}
 
