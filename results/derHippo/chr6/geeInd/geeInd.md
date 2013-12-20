@@ -69,18 +69,34 @@ idx <- seq_len(length(covdata.used))
 myGEE <- function(i, corstr) {
 	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
 }
+myGEE.int <- function(i, corstr) {
+	geeglm(coverage ~ sampleDepth + group * region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
+}
 
-## GEE AR1
+## GEE Ind
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-14 18:35:48 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 09:54:27 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd <- mclapply(idx, myGEE, corstr="independence", mc.cores=20)
 names(geeInd) <- names(covdata.used)[idx]
 save(geeInd, file=file.path(wdir, "geeInd.Rdata"))
 
+## GEE Ind - int
+if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
+</pre></div>
+<div class="message"><pre class="knitr r">## 2013-12-20 09:55:27 running GEE with AR1 - interaction
+</pre></div>
+<div class="source"><pre class="knitr r">geeInd.int <- mclapply(idx, myGEE.int, corstr="independence", mc.cores=20)
+names(geeInd.int) <- names(covdata.used)[idx]
+save(geeInd.int, file=file.path(wdir, "geeInd.int.Rdata"))
+
 ## Show an example:
-summary(geeInd[[1]])
+geeIng[[1]]
+</pre></div>
+<div class="error"><pre class="knitr r">## Error: object 'geeIng' not found
+</pre></div>
+<div class="source"><pre class="knitr r">summary(geeInd[[1]])
 </pre></div>
 <div class="output"><pre class="knitr r">## 
 ## Call:
@@ -101,6 +117,59 @@ summary(geeInd[[1]])
 ## Estimated Scale Parameters:
 ##             Estimate Std.err
 ## (Intercept)    0.151  0.0277
+## 
+## Correlation: Structure = independenceNumber of clusters:   25   Maximum cluster size: 141
+</pre></div>
+<div class="source"><pre class="knitr r">geeInd.int[[1]]
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group * region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+## Coefficients:
+##             (Intercept)             sampleDepth                 groupCO 
+##                  -5.641                   0.405                  -0.583 
+##               groupETOH           regionregionM           regionregion2 
+##                  -0.460                   0.416                   0.982 
+##   groupCO:regionregionM groupETOH:regionregionM   groupCO:regionregion2 
+##                  -0.175                  -0.033                  -0.520 
+## groupETOH:regionregion2 
+##                  -0.123 
+## 
+## Degrees of Freedom: 3525 Total (i.e. Null);  3515 Residual
+## 
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 0.147
+## 
+## Correlation:  Structure = independence  
+## Number of clusters:   25   Maximum cluster size: 141
+</pre></div>
+<div class="source"><pre class="knitr r">summary(geeInd.int[[1]])
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group * region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+##  Coefficients:
+##                         Estimate Std.err  Wald Pr(>|W|)    
+## (Intercept)              -5.6410  3.6463  2.39  0.12185    
+## sampleDepth               0.4048  0.1285  9.93  0.00162 ** 
+## groupCO                  -0.5828  0.1173 24.67  6.8e-07 ***
+## groupETOH                -0.4597  0.1165 15.56  8.0e-05 ***
+## regionregionM             0.4156  0.0796 27.27  1.8e-07 ***
+## regionregion2             0.9820  0.1098 80.05  < 2e-16 ***
+## groupCO:regionregionM    -0.1750  0.0896  3.81  0.05089 .  
+## groupETOH:regionregionM  -0.0330  0.0966  0.12  0.73272    
+## groupCO:regionregion2    -0.5204  0.1447 12.93  0.00032 ***
+## groupETOH:regionregion2  -0.1233  0.1444  0.73  0.39322    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Estimated Scale Parameters:
+##             Estimate Std.err
+## (Intercept)    0.147  0.0274
 ## 
 ## Correlation: Structure = independenceNumber of clusters:   25   Maximum cluster size: 141
 </pre></div>
@@ -422,12 +491,38 @@ geeInd.stat <- lapply(geeInd, myGEE.stat)
 </pre></div>
 <div class="source"><pre class="knitr r">save(geeInd.stat, file=file.path(wdir, "geeInd.stat.Rdata"))
 
+## Extract region2 coef estimate, interaction coef estiamtes, st.error, and Wald stat
+myGEE.int.stat <- function(y) {
+	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$alpha)
+	## Assumes that geeglm(std.err="san.se") which is the default value
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$valpha))
+	wald <- (beta/vbeta)^2
+	pval <- 1 - pchisq(wald, df=1)
+	df <- data.frame(coef=c("region2", "alpha", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	rownames(df) <- seq_len(nrow(df))
+	return(df)
+}
+
+geeInd.int.stat <- lapply(geeInd.int, myGEE.int.stat)
+</pre></div>
+<div class="error"><pre class="knitr r">## Error: arguments imply differing number of rows: 4, 3
+</pre></div>
+<div class="source"><pre class="knitr r">save(geeInd.int.stat, file=file.path(wdir, "geeInd.int.stat.Rdata"))
+</pre></div>
+<div class="error"><pre class="knitr r">## Error: object 'geeInd.int.stat' not found
+</pre></div>
+<div class="source"><pre class="knitr r">
+
 ## Show an example:
 geeInd.stat[[1]]
 </pre></div>
 <div class="output"><pre class="knitr r">##      coef estimate stderr wald pval
 ## 1 region2    0.755  0.073  107    0
 ## 2   alpha    0.755  0.073  107    0
+</pre></div>
+<div class="source"><pre class="knitr r">geeInd.int.stat[[1]]
+</pre></div>
+<div class="error"><pre class="knitr r">## Error: object 'geeInd.int.stat' not found
 </pre></div>
 </div></div>
 
@@ -445,14 +540,14 @@ geeInd.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:36:52 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 09:56:29 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 1.07 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 2.05 mins
 </pre></div>
 </div></div>
 
