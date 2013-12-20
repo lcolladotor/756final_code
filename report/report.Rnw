@@ -1,0 +1,247 @@
+% Document type and font specification
+\documentclass[11pt]{article}
+
+% Margin specification
+% Check http://en.wikibooks.org/wiki/LaTeX/Page_Layout for more info
+\usepackage[margin = 1in]{geometry}
+\usepackage[nottoc,notlof,notlot,numbib]{tocbibind}
+
+% Some misc and math packages
+% Check http://en.wikibooks.org/wiki/LaTeX/Mathematics for more info
+\usepackage{fancyhdr}
+\usepackage{manfnt}
+\usepackage{pgf}
+\usepackage{amsmath,amsthm,amssymb,natbib,graphicx}
+\usepackage{amsfonts}
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\usepackage{bbm}
+\usepackage{float}
+\usepackage{mathrsfs} %mathscr{A}
+\usepackage{hyperref,graphicx}
+
+% Bibliography
+%\usepackage[style=numeric,firstinits=true]{biblatex}
+% Specify bib files
+%\addbibresource{biblio.bib}
+
+% Color
+\usepackage{color}
+
+% For specifying the counter style of enumerate
+\usepackage{enumerate}
+
+% Page style definition
+\pagestyle{fancy}
+% Customize this to your liking.
+\lhead{}\chead{}\rhead{By Dan Jiang and Leo Collado}\lfoot{}\cfoot{\thepage}\rfoot{\today}
+
+% Line space
+\usepackage{setspace}
+% Default is normal, but un-comment below to your liking
+% \onehalfspacing
+% \doublespacing
+
+% Caption and figure def
+% Check http://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions for more info
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{wrapfig}
+
+% Math theorems shortcuts
+% Check http://en.wikibooks.org/wiki/LaTeX/Theorems for more info
+\usepackage{mathtools}
+\newtheorem{thm}{Theorem}
+\newtheorem{lem}{Lemma}[thm]
+\newtheorem{cor}{Corollary}[thm]
+\newtheorem{defi}{Definition}
+\newtheorem{conj}{Conjecture}
+\newtheorem{prop}{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{claim}{Claim}
+\newtheorem{fact}{Fact}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+% Some inherited commands
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\newcommand{\myurlshort}[2]{\href{#1}{\textcolor{gray}{\textsf{#2}}}}
+
+% knitr options
+<<setup, include=FALSE, cache=FALSE>>=
+# set global chunk options
+opts_chunk$set(fig.path='fig-', fig.align='center', fig.show='hold', fig.width=7, fig.height=7, out.width='.8\\linewidth')
+options(width=90)
+@
+
+% Math
+\newcommand{\btheta}{\mbox{\boldmath $\theta$}}
+\newcommand{\bupvartheta}{\mbox{\boldmath $\upvartheta$}}
+\newcommand{\bTheta}{\mbox{\boldmath $\Theta$}}
+\newcommand{\bPsi}{\mbox{\boldmath $\Psi$}}
+\newcommand{\bbeta}{\mbox{\boldmath $\beta$}}
+\newcommand{\bX}{\mbox{\boldmath $X$}}
+
+
+\begin{document}
+
+%\begin{titlepage}
+\begin{center}
+
+% Actual title
+{ \bfseries Initial method for \emph{linking} two adjacent regions using high-throughput sequencing data}\\%[0.3cm]
+\textsc{Advanced Methods VI 140.756}\\
+\normalsize
+\end{center}
+% \end{titlepage}
+
+%%%%%%%%%% Write document %%%%%%%%%%%%%%
+\begin{abstract}
+	We propose a statistical method to determine whether two adjacent candidate differentially expressed regions should be \emph{linked} or not.
+	Using two chromosomes from a public data set with three groups and 25 samples, we illustrate the feasibility of the method with positive results. We further identify complex cases and propose improvements to the method. 
+\end{abstract}
+
+
+\section*{Introduction}
+
+In the field of genomics, nowadays it is common to obtain data from specific biological mechanisms using high-throughput sequencing. When using this technology, the data is a set of measurements along the genome axis (sometimes summarized by features such as exons). Typically, such experiments involve two or more questions where the common question is: are there differences between the groups? Depending on the type of experiment (ChIP-seq, RNA-seq, etc), there are different solutions to find candidate regions. 
+
+A common problem is that the candidate regions can be highly fragmented. Multiple reasons provoke this behavior, such as biological reasons. For example, then the regions correspond to two exons and thus the intro creates the separation. Another source of fragmentation is the fact that measurements are far from ideal, presenting fluctuation on the data that can be hard to distinguish from the true signal.
+
+In this work, we attempt to answer the question: Are two adjacent regions \emph{similar}? This is a broad question and has to be refined. We start by answering the simple question: are the measurements similar between the two adjacent regions? A more advanced question is: is the difference between groups similar between the two adjacent regions? We were further interested in checking whether regions overlapping the same exon were more frequently similar. 
+
+In this particular work, we used \texttt{derfinder} to find candidate differentially expressed regions (DERs) from a public data set studying differential expression on brain 25 samples between control, cocaine addicts and alcohol addicts using RNA-seq. We focused on only two chromosomes as this work is a proof of concept. Figure \ref{fig:clusterExample} (top panel) shows a fragment of chromosome 6 where different candidate DERs are shown (green boxes). In it, we can observe region pairs that span different exons and others contained in the same exon (black boxes); we would think that the later should be very similar. 
+
+
+
+<<"packages", echo=FALSE, message=FALSE>>=
+library("ggplot2")
+@
+
+
+
+<<"clusterExample", echo=FALSE, out.width='1\\textwidth', fig.width=20, fig.height=10, cache=TRUE, fig.cap="(Top panel) Example of a region on chromosome 6 where multiple candidate differentially expressed regions were identified (regions are less than 3000 bases apart). (Bottom panel) Zoomed in plot for the first region pair spanning two different exons.">>=
+suppressMessages(library("ggbio"))
+suppressMessages(library("GenomicRanges"))
+load("../results/derHippo/chr6/figure/p.Rdata")
+print(p)
+g <- p + xlim(74227546, 74227934)
+print(g)
+@
+
+
+\section*{Methods}
+
+To translate from the genomics field to terms seen in class, the outcome measured is the coverage at a given base pair of the genome. The coverage is defined as the number of sequencing reads that align at that given base pair. It is typically between 0 and several thousands, and depends on how much data you obtained for a given sample. As common in the field, we $\log_2$ transformed the data after adding a scaling factor (32). Each sample would translate to the subject, while the individual base pairs translates to the repeated visits. Note that by construction, the data is correlated because the coverage at base $i$ will be very similar to the one in base $i + 1$. We thus considered fitting a GEE, and for comparisons purposes used independence, exchangeable and AR-1 working correlations.
+
+For each pair of adjacent regions (within 3000 base pairs of each other), we built a \emph{region-pair}. These consisted of: \textbf{region1} first region, \textbf{regionM} middle part, and \textbf{region2} second region.
+
+Due to the high dimensions of some of these region-pairs\footnote{Note that the total number of observations is 25 times the sum of the width of the region pair, which easily gets beyond 10 thousand and above.}, we only considered the region-pairs where both region 1 and 2 had a width greater than 1, but regionM had a width lower than 250. Thus, we used  300 out of 890 region-pairs ($\sim$ 33.7\%) for chromosome 6 and  187 out of 573 region-pairs ($\sim$ 32.6\%) for chromosome 22, for a total of 487 region-pairs.
+
+Then for each region-pair we used the following model
+
+\[ \log_2( Y_{ijk} + 32) =  \alpha + \beta_1 \text{sampleDepth}_i + \bbeta_{2} \text{group}_j + \bbeta_{3} \text{region}_k + \epsilon \]
+
+Using region1 as the reference (for identifiability), we want to test $\bbeta_3\left( \text{region}_2 \right) = 0$. Doing so, we answer the basic question of whether region 1 and 2 are similar overall.
+
+Using the following interaction model ($i=1, 2, \ldots, 25$ for sample)
+
+\[ \log_2( Y_{ijk} + 32) =  \alpha + \beta_1 \text{sampleDepth}_i + \bbeta_{2} \text{group}_j + \bbeta_{3} \text{region}_k + \bbeta_{4} \text{group $\times$ region}_{jk} + \epsilon \]
+
+we can test whether the region2 coefficient and the region2 vs group coefficients interactions are significantly different from 0. Doing so answers the advanced question of whether the differential expression stays the same across region 1 and 2.
+
+Note that in both models we adjust for the how much data we have per sample (called sample depth in genomics). This is required to make sure that the differences are due to the group and/or region, but not due to the amount of available data.
+
+\section*{Results}
+
+
+Figure \ref{fig:rmspe} shows the boxplots for the log Root Mean Squared Prediction Error (RMSPE) for the six models with the 300 region-pairs of chromosome 6. Overall, the distribution of the RMSPE is very similar for all models, with the AR-1 models having slightly higher RMSPE. Figure \ref{fig:rmspeAR1vsEx} shows a more detailed comparison of the RMSPE between the AR-1 and Exchangeable models, both with and without the interaction terms. From figure \ref{fig:rmspeAR1vsEx} (top panels), we note that the AR-1 models have slightly worse RMSPE than the Exchangeable models. Furthermore, from figure \ref{fig:rmspeAR1vsEx} (bottom panels), we can conclude that the models perform slightly better when fitting the interaction terms, although the difference is very small. Thus, judging solely in terms of RMSPE, for each question the GEE with Exchangeable working correlation is the better model.
+
+
+
+<<"rmspe", echo=FALSE, out.width='.5\\linewidth', fig.cap="Boxplots of the log of the Root Mean Squared Prediction Error (RMSPE) for all six methods; only for chromsome 6.">>=
+load("../results/derHippo/chr6/rmspe/rmspe.all.Rdata")
+print(ggplot(rmspe.all, aes(x=method, y=log(rmspe))) + geom_boxplot() + xlab("model")) 
+@
+
+
+<<"rmspeAR1vsEx", echo=FALSE, out.width='.7\\linewidth', fig.cap="(Top left) GEE AR1 vs GEE Exchangeable (Ex) RMSPE, GEE AR1 performs worse. (Top right) GEE Ex with interaction vs GEE AR1 with interaction, GEE AR1 with interaction performs worse. (Bottom left) GEE Ex with interaction vs GEE Ex without interaction, the latter performs slightly worse. (Bottom right) GEE AR1 with interaction vs GEE AR1 without interaction, the latter performs slightly worse. In all panels, the red line is the diagonal line.">>=
+par(mfrow=c(2, 2))
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex"], rmspe.all$rmspe[rmspe.all$method=="AR1"], ylab="RMSPE GEE AR1", xlab="RMSPE GEE Ex", main="")
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex-int"], rmspe.all$rmspe[rmspe.all$method=="AR1-int"], ylab="RMSPE GEE AR1 - w/interaction", xlab="RMSPE GEE Ex w/interaction", main="")
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex"], rmspe.all$rmspe[rmspe.all$method=="Ex-int"], ylab="RMSPE GEE Ex w/interaction", xlab="RMSPE GEE Ex", main="")
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="AR1"], rmspe.all$rmspe[rmspe.all$method=="AR1-int"], ylab="RMSPE GEE AR1 w/interaction", xlab="RMSPE GEE AR1", main="")
+abline(0, 1, col="red")
+@
+
+We further investigated how the models performed in terms of the basic question when considering region-pairs where region1 and region2 overlap the same exon (\emph{same-exon}), different exons (\emph{diff-exon}) or at least one of the two is not overlapping an exon (\emph{no-exons}). Because we are considering a total of 487 region-pairs, we adjusted the p-values to control the false discovery rate using the \texttt{qvalue} package available in Bioconductor. Then, we accepted (failed to reject) the null hypothesis that the region2 coefficient is 0 when the q-value was greater or equal to $0.10$, and rejected otherwise. Table \ref{tab1} shows the results for both chromosomes and all three types by exon status. From the table, we can observe that in the majority of the cases, the conclusion is the same between GEE with AR-1 and Exchangeable working correlations. Furthermore, for \emph{no-exons} and \emph{diff-exon}, any of the two models rarely accepts the null hypothesis for any region-pair, while they do so more frequently for the \emph{same-exon} case. 
+
+<<"exonStatus", echo=FALSE, results="asis">>=
+load("../results/derHippo/chr6/rmspe/comp.status.Rdata")
+c6 <- comp.status
+load("../results/derHippo/chr22/rmspe/comp.status.Rdata")
+comp <- list("chr6"=c6, "chr22"=comp.status)
+
+df <- data.frame("BothAccept"=rep(0, 6), "Ar1Accept"=rep(0, 6), "ExAccept"=rep(0, 6), "BothReject"=rep(0, 6), chr=rep(names(comp), each=3), ExonStatus=rep(names(comp.status), 2))
+i <- 1
+for(chr in unique(df$chr)) {
+	for(status in unique(df$ExonStatus)) {
+		current <- comp[[chr]][[status]]$qval[[2]]
+		df[i, 1] <- ifelse(is.na(current["0-0"]), 0, current["0-0"])
+		df[i, 2] <- ifelse(is.na(current["0-1"]), 0, current["0-1"])
+		df[i, 3] <- ifelse(is.na(current["1-0"]), 0, current["1-0"])
+		df[i, 4] <- ifelse(is.na(current["1-1"]), 0, current["1-1"])
+		i <- i + 1	
+	}
+}
+library(xtable)
+print(xtable(df, digits=0, align="c|c|c|c|c|c|c|", label="tab1", caption="Agreement between GEE with AR-1 and Exchangeable working correlations (without interaction) on accepting/rejecting the null hypothesis that the region 2 coefficient is significantly different from 0 judged by a q-value less than 0.10. Separated by exon status."), include.rownames=FALSE)
+@
+
+For the more advanced question, per pair we perform three tests (region2, region2 interaction with CO group, region2 interaction with ETOH group). Table \ref{tab2} shows the results only for the \emph{same-exons} case. From the table, we can see that chromosome 6 has every possible case at least once. In both chromosomes, the 1-1 case was the most frequent, meaning that they reject the null hypothesis for only 1 of the 3 tests. From the table, we can see that answering the advanced question of whether the differential expression by group is the same in region1 and region2 is much more complicated, even if we consider only the $0-*$ and $*-0$ cases versus the $3-*$ and $*-3$ cases.
+
+<<"intStatus", echo=FALSE, results="asis">>=
+
+dat1 <- lapply(comp$chr6, function(x) { x$int[[2]] })[["same-exon"]]
+dat2 <- lapply(comp$chr22, function(x) { x$int[[2]] })[["same-exon"]]
+df2 <- data.frame(t(as.matrix(dat1)))
+colnames(df2) <- names(dat1)
+df2[2, ] <- rep(NA, ncol(df2))
+for(i in colnames(df2)) { df2[2, i] <- dat2[i]}
+df2$chr <- c("chr6", "chr22")
+print(xtable(df2, digits=2, label="tab2", caption="Agreement between GEE with AR-1 and Exchangeable working correlations on the region2, region2:groupCO and region2:groupETOH coefficients, shown only for the region pairs that share an exon. Columns are coded by the number of null hypothesis rejections, first for GEE AR1 and then for GEE Ex."), include.rownames=FALSE)
+@
+
+
+
+
+\section*{Conclusions}
+
+From this work, we noticed that using GEE with the longer region-pairs takes a significant amount of computing time, making the method less feasible in such cases. In these cases, it might be possible to drop regionM or take a subset of it to improve the feasibility of the method.
+
+Furthermore, GEE with Exchangeable working correlation outperformed GEE with AR-1 working correlation in terms of RMSPE, although the difference was small for most region-pairs. When using the models without the interaction term, region-pairs sharing an exon were linked in 11-20\% of the cases. The method we have proposed works as evaluated by comparing to the exon status of the region-pairs, but is restrictive in the sense that a lower proportion of the region-pairs sharing an exon were linked than what was expected. This could be due to the complexity of the data as illustrated by the models with interaction terms and the complexity of cases observed as shown in \ref{tab2}. 
+
+\section*{References}
+
+\begin{itemize}
+\item \textbf{Project} code and results are available at \url{https://github.com/lcolladotor/756final_code}
+\item A. Frazee, S. Sabunciyan, K. D. Hansen, R. A. Irizarry, and J. T. Leek (2013). Differential expression analysis of rna-seq data at single base resolution, Biostatistics, \emph{recently accepted}.
+\item L. Collado-Torres, A. Frazee, M. Love, R. A. Irizarry, A. E. Jaffe, J. T. Leek (2013). derfinder: Software for annotation-agnostic RNA-seq differential expression analysis. Manuscript in preparation.
+\item \texttt{derfinder} package \url{https://github.com/lcolladotor/derfinder}
+\end{itemize}
+
+
+% For references, uncomment and remember to use the following series
+% when compling the pdf:
+% R Sweave, pdflatex, bibtex, pdflatex, pdflatex, open pdf
+% \printbibliography
+
+% Uncomment if you want to add the R session information
+%\tiny
+%<<info, results='asis', echo = FALSE>>=
+%toLatex(sessionInfo())
+%@
+
+
+
+\end{document}
