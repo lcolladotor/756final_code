@@ -62,6 +62,9 @@ dir.create(wdir, recursive=TRUE)
 load(file.path(ddir, "geeAR1", "geeAR1.Rdata"))
 load(file.path(ddir, "geeInd", "geeInd.Rdata"))
 load(file.path(ddir, "geeEx", "geeEx.Rdata"))
+load(file.path(ddir, "geeAR1", "geeAR1.int.Rdata"))
+load(file.path(ddir, "geeInd", "geeInd.int.Rdata"))
+load(file.path(ddir, "geeEx", "geeEx.int.Rdata"))
 ```
 
 ## Calculate the RMSPE
@@ -74,9 +77,12 @@ rmspe.all <- lapply(names(rmspe.all), function(x) {
 	ar <- unlist(rmspe(y=geeAR1[[x]]$y, yHat=geeAR1[[x]]$fitted.values, includeSE=TRUE))
 	ind <- unlist(rmspe(y=geeInd[[x]]$y, yHat=geeInd[[x]]$fitted.values, includeSE=TRUE))
 	ex <- unlist(rmspe(y=geeEx[[x]]$y, yHat=geeEx[[x]]$fitted.values, includeSE=TRUE))
-	df <- data.frame(rbind(ar, ind, ex))
-	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$pairID <- rep(as.integer(x), 3)
+	ar.i <- unlist(rmspe(y=geeAR1.int[[x]]$y, yHat=geeAR1.int[[x]]$fitted.values, includeSE=TRUE))
+	ind.i <- unlist(rmspe(y=geeInd.int[[x]]$y, yHat=geeInd.int[[x]]$fitted.values, includeSE=TRUE))
+	ex.i <- unlist(rmspe(y=geeEx.int[[x]]$y, yHat=geeEx.int[[x]]$fitted.values, includeSE=TRUE))
+	df <- data.frame(rbind(ar, ind, ex, ar.i, ind.i, ex.i))
+	df$method <- factor(c("AR1", "Ind", "Ex", "AR1-int", "Ind-int", "Ex-int"))
+	df$pairID <- rep(as.integer(x), 6)
 	rownames(df) <- NULL
 	return(df)
 })
@@ -87,19 +93,25 @@ save(rmspe.all, file=file.path(wdir, "rmspe.all.Rdata"))
 ## Explore the results
 
 ```{r "rmspeEDA", device="CairoPNG"}
-ggplot(rmspe.all, aes(x=method, y=rmspe)) + geom_violin()
+ggplot(rmspe.all, aes(x=method, y=log(rmspe))) + geom_violin()
 ggplot(rmspe.all, aes(x=method, y=se)) + geom_violin()
 plot(rmspe.all$rmspe[rmspe.all$method=="Ind"], rmspe.all$rmspe[rmspe.all$method=="Ex"])
 abline(0, 1, col="red")
-plot(rmspe.all$rmspe[rmspe.all$method=="Ind"], rmspe.all$rmspe[rmspe.all$method=="AR1"])
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex"], rmspe.all$rmspe[rmspe.all$method=="AR1"])
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex"], rmspe.all$rmspe[rmspe.all$method=="AR1-int"])
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="Ex"], rmspe.all$rmspe[rmspe.all$method=="Ex-int"])
+abline(0, 1, col="red")
+plot(rmspe.all$rmspe[rmspe.all$method=="AR1"], rmspe.all$rmspe[rmspe.all$method=="AR1-int"])
 abline(0, 1, col="red")
 plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="Ex"])
 abline(0, 1, col="red")
-plot(rmspe.all$se[rmspe.all$method=="Ind"], rmspe.all$se[rmspe.all$method=="AR1"])
+plot(rmspe.all$se[rmspe.all$method=="Ex"], rmspe.all$se[rmspe.all$method=="AR1"])
 abline(0, 1, col="red")
-ggplot(subset(rmspe.all, method!="Ex"), aes(x=rmspe, y=se, color=method)) + geom_point()
-ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=rmspe, color=method)) + geom_point()
-ggplot(subset(rmspe.all, method!="Ex"), aes(x=pairID, y=se, color=method)) + geom_point()
+ggplot(subset(rmspe.all, !method %in% c("Ind", "Ind-int")), aes(x=rmspe, y=se, color=method)) + geom_point()
+ggplot(subset(rmspe.all, !method %in% c("Ind", "Ind-int")), aes(x=pairID, y=rmspe, color=method)) + geom_point()
+ggplot(subset(rmspe.all, !method %in% c("Ind", "Ind-int")), aes(x=pairID, y=se, color=method)) + geom_point()
 tapply(rmspe.all$rmspe, rmspe.all$method, summary)
 tapply(rmspe.all$se, rmspe.all$method, summary)
 ```
@@ -113,6 +125,9 @@ tapply(rmspe.all$se, rmspe.all$method, summary)
 load(file.path(ddir, "geeAR1", "geeAR1.stat.Rdata"))
 load(file.path(ddir, "geeInd", "geeInd.stat.Rdata"))
 load(file.path(ddir, "geeEx", "geeEx.stat.Rdata"))
+load(file.path(ddir, "geeAR1", "geeAR1.int.stat.Rdata"))
+load(file.path(ddir, "geeInd", "geeInd.int.stat.Rdata"))
+load(file.path(ddir, "geeEx", "geeEx.int.stat.Rdata"))
 
 pvals <- vector("list", length(geeAR1))
 names(pvals) <- names(geeAR1)
@@ -121,15 +136,20 @@ pvals <- lapply(names(pvals), function(x) {
 	ar <- geeAR1.stat[[x]]$pval[1]
 	ind <- geeInd.stat[[x]]$pval[1]
 	ex <- geeEx.stat[[x]]$pval[1]
-	df <- data.frame(pval=c(ar, ind, ex))
-	df$method <- factor(c("AR1", "Ind", "Ex"))
-	df$pairID <- rep(as.integer(x), 3)
+	ar.i <- geeAR1.int.stat[[x]]$pval[1:3]
+	ind.i <- geeInd.int.stat[[x]]$pval[1:3]
+	ex.i <- geeEx.int.stat[[x]]$pval[1:3]
+	df <- data.frame(pval=c(ar, ind, ex, ar.i, ind.i, ex.i))
+	df$method <- factor(c("AR1", "Ind", "Ex", rep(c("AR1-int", "Ind-int", "Ex-int"), each=3)))
+	df$pairID <- rep(as.integer(x), 12)
+	df$coef <- factor(c("region2", "groupCO:region2", "groupETOH:region2")[c(rep(1, 4), 2, 3, rep(1:3, 2))])
+	df$methodCoef <- factor(1:12)
 	return(df)
 })
 pvals <- do.call(rbind, pvals)
 qvals <- rep(NA, nrow(pvals))
-for(i in c("AR1", "Ind", "Ex")) {
-	qvals[pvals$method == i] <- qvalue(pvals$pval[pvals$method == i])$qvalues
+for(i in 1:12) {
+	qvals[pvals$methodCoef == i] <- qvalue(pvals$pval[pvals$methodCoef == i])$qvalues
 }
 pvals$qval <- qvals
 pvals$pvalSig <- pvals$pval < 0.05
@@ -139,13 +159,13 @@ pvals$qvalSig <- pvals$qval < 0.10
 
 ```{r "explorePvals", dev="CairoPNG"}
 summary(pvals)
-ggplot(pvals, aes(x=method, y=pval)) + geom_violin()
-ggplot(pvals, aes(x=method, y=qval)) + geom_violin()
+ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(~ coef)
+ggplot(pvals, aes(x=method, y=qval)) + geom_violin() + facet_grid(~ coef)
 plot(pvals$qval[pvals$method=="Ind"], pvals$qval[pvals$method=="Ex"])
 abline(0, 1, col="red")
-plot(pvals$qval[pvals$method=="Ind"], pvals$qval[pvals$method=="AR1"])
+plot(pvals$qval[pvals$method=="Ex"], pvals$qval[pvals$method=="AR1"])
 abline(0, 1, col="red")
-ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point()
+ggplot(subset(pvals,!method %in% c("Ind", "Ind-int")), aes(x=pairID, y=qval, colour=method)) + geom_point() + facet_grid(~ coef)
 ```
 
 # Region pairs and exons
@@ -170,15 +190,17 @@ ex.info <- lapply(unique(pvals$pairID), function(x) {
 names(ex.info) <- unique(pvals$pairID)
 ex.info <- unlist(ex.info)
 table(ex.info)
-pvals$exonStatus <- factor(rep(ex.info, each=3), c("no-exons", "diff-exon", "same-exon"))
+
+## Assign exon status
+pvals$exonStatus <- factor(rep(ex.info, each=12), c("no-exons", "diff-exon", "same-exon"))
 save(pvals, file=file.path(wdir, "pvals.Rdata"))
 ```
 
 ```{r "pairsExonsEDA", dev="CairoPNG"}
-ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(exonStatus~.)
-ggplot(pvals, aes(x=method, y=qval)) + geom_violin() + facet_grid(exonStatus~.)
+ggplot(pvals, aes(x=method, y=pval)) + geom_violin() + facet_grid(exonStatus~ coef)
+ggplot(pvals, aes(x=method, y=qval)) + geom_violin() + facet_grid(exonStatus~ coef)
 
-ggplot(subset(pvals, method!="Ex"), aes(x=pairID, y=qval, colour=method)) + geom_point() + facet_grid(exonStatus~.)
+ggplot(subset(pvals, !method %in% c("Ind", "Ind-int")), aes(x=pairID, y=qval, colour=method)) + geom_point() + facet_grid(exonStatus~ coef)
 
 ## By exon status
 
@@ -187,22 +209,40 @@ names(comp.status) <- c("no-exons", "diff-exon", "same-exon")
 for(ex.status in names(comp.status)) {
 	
 	## Judging by p-value
-	x11 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, method, summary))
-	casesPval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(pvalSig, pairID, as.integer)))
+	x11 <- with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex-int", "AR1-int")), tapply(pvalSig, method, summary))
+	casesPval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex-int", "AR1-int")), tapply(pvalSig, pairID, as.integer)))
 	x12 <- table(apply(casesPval, 1, paste, collapse="-"))
 
 	## Judging by q-value
-	x21 <- with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, method, summary))
-	casesQval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & method != "Ex"), tapply(qvalSig, pairID, as.integer)))
+	x21 <- with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex-int", "AR1-int")), tapply(qvalSig, method, summary))
+	casesQval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex-int", "AR1-int")), tapply(qvalSig, pairID, as.integer)))
 	x22 <- table(apply(casesQval, 1, paste, collapse="-"))
-	comp.status[[ex.status]] <- list(pval=list(x11, x12), qval=list(x21, x22))
+	
+	## Interaction cases
+	intPval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex", "AR1")), tapply(pvalSig, pairID, as.integer)))
+	x31 <- table(apply(intPval, 1, function(x) {
+		paste(c(sum(x[1:3]), sum(x[4:6])), collapse="-")
+	}))
+	intQval <- do.call(rbind, with(subset(pvals, exonStatus == ex.status & !method %in% c("Ind", "Ind-int", "Ex", "AR1")), tapply(qvalSig, pairID, as.integer)))
+	x32 <- table(apply(intQval, 1, function(x) {
+		paste(c(sum(x[1:3]), sum(x[4:6])), collapse="-")
+	}))
+		
+	## done
+	comp.status[[ex.status]] <- list(pval=list(x11, x12), qval=list(x21, x22), int=list(x31, x32))
 }
 
-## Agreement between AR1 and Ind by exon status. 0 means that it was not significant, 1 that it was.
+## Agreement between AR1 and Ex by exon status. 0 means that it was not significant, 1 that it was.
 ## By pvalue
 lapply(comp.status, function(x) { x$pval[[2]]})
 ## By qvalue
 lapply(comp.status, function(x) { x$qval[[2]]})
+
+## Agreement between AR1-int and Ex-int by exon status
+## By pvalue
+lapply(comp.status, function(x) { x$int[[1]]})
+## By qvalue
+lapply(comp.status, function(x) { x$int[[2]]})
 
 save(comp.status, file=file.path(wdir, "comp.status.Rdata"))
 ```
