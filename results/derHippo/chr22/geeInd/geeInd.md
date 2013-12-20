@@ -76,7 +76,7 @@ myGEE.int <- function(i, corstr) {
 ## GEE Ind
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 10:18:38 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 11:05:01 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd <- mclapply(idx, myGEE, corstr="independence", mc.cores=20)
 names(geeInd) <- names(covdata.used)[idx]
@@ -85,7 +85,7 @@ save(geeInd, file=file.path(wdir, "geeInd.Rdata"))
 ## GEE Ind - int
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 10:19:06 running GEE with AR1 - interaction
+<div class="message"><pre class="knitr r">## 2013-12-20 11:05:24 running GEE with AR1 - interaction
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd.int <- mclapply(idx, myGEE.int, corstr="independence", mc.cores=20)
 names(geeInd.int) <- names(covdata.used)[idx]
@@ -213,7 +213,7 @@ myGEE.int.stat <- function(y) {
 	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$vgamma))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "gamma", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "groupCO:region2", "groupETOH:region2", "gamma"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
@@ -233,9 +233,9 @@ geeInd.stat[[1]]
 </pre></div>
 <div class="output"><pre class="knitr r">##                coef  estimate  stderr    wald    pval
 ## 1           region2  0.011179 0.01473 0.57570 0.44800
-## 2             gamma -0.011040 0.01739 0.40313 0.52548
-## 3   groupCO:region2 -0.000412 0.01614 0.00065 0.97966
-## 4 groupETOH:region2  0.003814 0.00124 9.53364 0.00202
+## 2   groupCO:region2 -0.011040 0.01739 0.40313 0.52548
+## 3 groupETOH:region2 -0.000412 0.01614 0.00065 0.97966
+## 4             gamma  0.003814 0.00124 9.53364 0.00202
 </pre></div>
 </div></div>
 
@@ -253,14 +253,14 @@ geeInd.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 10:19:34 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 11:05:50 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 57 secs
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 49.1 secs
 </pre></div>
 </div></div>
 
