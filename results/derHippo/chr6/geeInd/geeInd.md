@@ -76,7 +76,7 @@ myGEE.int <- function(i, corstr) {
 ## GEE Ind
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:54:27 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 10:19:39 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd <- mclapply(idx, myGEE, corstr="independence", mc.cores=20)
 names(geeInd) <- names(covdata.used)[idx]
@@ -85,16 +85,33 @@ save(geeInd, file=file.path(wdir, "geeInd.Rdata"))
 ## GEE Ind - int
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:55:27 running GEE with AR1 - interaction
+<div class="message"><pre class="knitr r">## 2013-12-20 10:20:42 running GEE with AR1 - interaction
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd.int <- mclapply(idx, myGEE.int, corstr="independence", mc.cores=20)
 names(geeInd.int) <- names(covdata.used)[idx]
 save(geeInd.int, file=file.path(wdir, "geeInd.int.Rdata"))
 
 ## Show an example:
-geeIng[[1]]
+geeInd[[1]]
 </pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeIng' not found
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+## Coefficients:
+##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
+##       -5.5445        0.4048       -0.8091       -0.5068        0.3421 
+## regionregion2 
+##        0.7552 
+## 
+## Degrees of Freedom: 3525 Total (i.e. Null);  3519 Residual
+## 
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 0.151
+## 
+## Correlation:  Structure = independence  
+## Number of clusters:   25   Maximum cluster size: 141
 </pre></div>
 <div class="source"><pre class="knitr r">summary(geeInd[[1]])
 </pre></div>
@@ -177,352 +194,48 @@ geeIng[[1]]
 
 ## Extract region2 coef estimate, st.error, and Wald stat
 myGEE.stat <- function(y) {
-	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
+	beta <- c(coef(y)["regionregion2"], y$geese$gamma)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vgamma))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "gamma"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
 geeInd.stat <- lapply(geeInd, myGEE.stat)
-</pre></div>
-<div class="warning"><pre class="knitr r">## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-## Warning: row names were found from a short variable and have been discarded
-</pre></div>
-<div class="source"><pre class="knitr r">save(geeInd.stat, file=file.path(wdir, "geeInd.stat.Rdata"))
+save(geeInd.stat, file=file.path(wdir, "geeInd.stat.Rdata"))
 
 ## Extract region2 coef estimate, interaction coef estiamtes, st.error, and Wald stat
 myGEE.int.stat <- function(y) {
-	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$alpha)
+	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$gamma)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$vgamma))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "gamma", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
 
 geeInd.int.stat <- lapply(geeInd.int, myGEE.int.stat)
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: arguments imply differing number of rows: 4, 3
-</pre></div>
-<div class="source"><pre class="knitr r">save(geeInd.int.stat, file=file.path(wdir, "geeInd.int.stat.Rdata"))
-</pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeInd.int.stat' not found
-</pre></div>
-<div class="source"><pre class="knitr r">
+save(geeInd.int.stat, file=file.path(wdir, "geeInd.int.stat.Rdata"))
+
 
 ## Show an example:
 geeInd.stat[[1]]
 </pre></div>
-<div class="output"><pre class="knitr r">##      coef estimate stderr wald pval
-## 1 region2    0.755  0.073  107    0
-## 2   alpha    0.755  0.073  107    0
+<div class="output"><pre class="knitr r">##      coef estimate stderr  wald     pval
+## 1 region2    0.755 0.0730 107.1 0.00e+00
+## 2   gamma    0.151 0.0277  29.8 4.75e-08
 </pre></div>
 <div class="source"><pre class="knitr r">geeInd.int.stat[[1]]
 </pre></div>
-<div class="error"><pre class="knitr r">## Error: object 'geeInd.int.stat' not found
+<div class="output"><pre class="knitr r">##                coef estimate stderr   wald     pval
+## 1           region2    0.982 0.1098 80.046 0.00e+00
+## 2             gamma   -0.520 0.1447 12.931 3.23e-04
+## 3   groupCO:region2   -0.123 0.1444  0.729 3.93e-01
+## 4 groupETOH:region2    0.147 0.0274 28.928 7.51e-08
 </pre></div>
 </div></div>
 
@@ -540,14 +253,14 @@ geeInd.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 09:56:29 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 10:21:45 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 2.05 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 2.11 mins
 </pre></div>
 </div></div>
 

@@ -218,7 +218,7 @@ myGEE.int <- function(i, corstr) {
 ## GEE AR1
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:43:14 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 10:21:54 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeAR1 <- mclapply(idx, myGEE, corstr="ar1", mc.cores=20)
 names(geeAR1) <- names(covdata.used)[idx]
@@ -227,7 +227,7 @@ save(geeAR1, file=file.path(wdir, "geeAR1.Rdata"))
 ## GEE AR1 - int
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:47:22 running GEE with AR1 - interaction
+<div class="message"><pre class="knitr r">## 2013-12-20 10:25:43 running GEE with AR1 - interaction
 </pre></div>
 <div class="source"><pre class="knitr r">geeAR1.int <- mclapply(idx, myGEE.int, corstr="ar1", mc.cores=20)
 names(geeAR1.int) <- names(covdata.used)[idx]
@@ -353,12 +353,12 @@ geeAR1[[1]]
 <div class="source"><pre class="knitr r">
 ## Extract region2 coef estimate, st.error, and Wald stat
 myGEE.stat <- function(y) {
-	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
+	beta <- c(coef(y)["regionregion2"], y$geese$gamma, y$geese$alpha)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$gamma, y$geese$valpha))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "gamma", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
@@ -367,12 +367,12 @@ save(geeAR1.stat, file=file.path(wdir, "geeAR1.stat.Rdata"))
 
 ## Extract region2 coef estimate, interaction coef estiamtes, st.error, and Wald stat
 myGEE.int.stat <- function(y) {
-	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$alpha)
+	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$gamma, y$geese$alpha)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$vgamma, y$geese$valpha))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "groupCO:region2", "groupETOH:region2", "gamma", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
@@ -384,17 +384,19 @@ save(geeAR1.int.stat, file=file.path(wdir, "geeAR1.int.stat.Rdata"))
 ## Show an example:
 geeAR1.stat[[1]]
 </pre></div>
-<div class="output"><pre class="knitr r">##      coef estimate  stderr    wald     pval
-## 1 region2   0.0721 0.00901    63.9 1.33e-15
-## 2   alpha   0.9785 0.00477 42165.7 0.00e+00
+<div class="output"><pre class="knitr r">##      coef estimate  stderr     wald     pval
+## 1 region2   0.0721 0.00901    63.94 1.33e-15
+## 2   gamma   0.1797 0.42386     0.18 6.72e-01
+## 3   alpha   0.9785 0.00477 42165.71 0.00e+00
 </pre></div>
 <div class="source"><pre class="knitr r">geeAR1.int.stat[[1]]
 </pre></div>
 <div class="output"><pre class="knitr r">##                coef estimate  stderr     wald     pval
 ## 1           region2   0.0936 0.01197    61.14 5.33e-15
-## 2             alpha  -0.0418 0.01969     4.50 3.38e-02
-## 3   groupCO:region2  -0.0205 0.01918     1.14 2.85e-01
-## 4 groupETOH:region2   0.9786 0.00478 41849.87 0.00e+00
+## 2   groupCO:region2  -0.0418 0.01969     4.50 3.38e-02
+## 3 groupETOH:region2  -0.0205 0.01918     1.14 2.85e-01
+## 4             gamma   0.1793 0.03091    33.64 6.63e-09
+## 5             alpha   0.9786 0.00478 41849.87 0.00e+00
 </pre></div>
 </div></div>
 
@@ -412,14 +414,14 @@ geeAR1.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 09:51:15 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 10:29:32 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 8.07 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 7.67 mins
 </pre></div>
 </div></div>
 

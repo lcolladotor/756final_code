@@ -76,7 +76,7 @@ myGEE.int <- function(i, corstr) {
 ## GEE Ex
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:54:26 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 10:18:37 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeEx <- mclapply(idx, myGEE, corstr="exchangeable", mc.cores=20)
 names(geeEx) <- names(covdata.used)[idx]
@@ -85,7 +85,7 @@ save(geeEx, file=file.path(wdir, "geeEx.Rdata"))
 ## GEE Ex - int
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-20 09:55:03 running GEE with AR1 - interaction
+<div class="message"><pre class="knitr r">## 2013-12-20 10:19:18 running GEE with AR1 - interaction
 </pre></div>
 <div class="source"><pre class="knitr r">geeEx.int <- mclapply(idx, myGEE.int, corstr="exchangeable", mc.cores=20)
 names(geeEx.int) <- names(covdata.used)[idx]
@@ -212,12 +212,12 @@ geeEx[[1]]
 
 ## Extract region2 coef estimate, st.error, and Wald stat
 myGEE.stat <- function(y) {
-	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
+	beta <- c(coef(y)["regionregion2"], y$geese$gamma, y$geese$alpha)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$gamma, y$geese$valpha))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "gamma", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
@@ -226,12 +226,12 @@ save(geeEx.stat, file=file.path(wdir, "geeEx.stat.Rdata"))
 
 ## Extract region2 coef estimate, interaction coef estiamtes, st.error, and Wald stat
 myGEE.int.stat <- function(y) {
-	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$alpha)
+	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$gamma, y$geese$alpha)
 	## Assumes that geeglm(std.err="san.se") which is the default value
-	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$valpha))
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$vgamma, y$geese$valpha))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "alpha", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "groupCO:region2", "groupETOH:region2", "gamma", "alpha"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
@@ -243,17 +243,19 @@ save(geeEx.int.stat, file=file.path(wdir, "geeEx.int.stat.Rdata"))
 ## Show an example:
 geeEx.stat[[1]]
 </pre></div>
-<div class="output"><pre class="knitr r">##      coef estimate  stderr    wald  pval
-## 1 region2  0.00707 0.00623    1.29 0.256
-## 2   alpha  0.92946 0.02653 1227.66 0.000
+<div class="output"><pre class="knitr r">##      coef estimate  stderr     wald  pval
+## 1 region2  0.00707 0.00623 1.29e+00 0.256
+## 2   gamma  0.00382 0.06181 3.82e-03 0.951
+## 3   alpha  0.92946 0.02653 1.23e+03 0.000
 </pre></div>
 <div class="source"><pre class="knitr r">geeEx.int.stat[[1]]
 </pre></div>
-<div class="output"><pre class="knitr r">##                coef  estimate stderr     wald  pval
-## 1           region2  0.011179 0.0147 5.76e-01 0.448
-## 2             alpha -0.011040 0.0174 4.03e-01 0.525
-## 3   groupCO:region2 -0.000412 0.0161 6.50e-04 0.980
-## 4 groupETOH:region2  0.931185 0.0251 1.37e+03 0.000
+<div class="output"><pre class="knitr r">##                coef  estimate  stderr     wald    pval
+## 1           region2  0.011179 0.01473 5.76e-01 0.44800
+## 2   groupCO:region2 -0.011040 0.01739 4.03e-01 0.52548
+## 3 groupETOH:region2 -0.000412 0.01614 6.50e-04 0.97966
+## 4             gamma  0.003814 0.00124 9.53e+00 0.00202
+## 5             alpha  0.931185 0.02515 1.37e+03 0.00000
 </pre></div>
 </div></div>
 
@@ -271,14 +273,14 @@ geeEx.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 09:55:53 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 10:20:21 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 1.45 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 1.73 mins
 </pre></div>
 </div></div>
 
