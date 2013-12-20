@@ -104,7 +104,7 @@ myGEE.int.stat <- function(y) {
 	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$vgamma))
 	wald <- (beta/vbeta)^2
 	pval <- 1 - pchisq(wald, df=1)
-	df <- data.frame(coef=c("region2", "gamma", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	df <- data.frame(coef=c("region2", "groupCO:region2", "groupETOH:region2", "gamma"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
 	rownames(df) <- seq_len(nrow(df))
 	return(df)
 }
