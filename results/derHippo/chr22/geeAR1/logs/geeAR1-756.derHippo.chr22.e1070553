@@ -1,0 +1,10 @@
+Warning message:
+In dir.create(reportdir, recursive = TRUE) :
+  '/home/bst/student/lcollado/756final_code/results/derHippo/chr22/geeAR1' already exists
+
+
+processing file: /home/bst/student/lcollado/756final_code/geeAR1/geeAR1.Rmd
+output file: geeAR1.md
+
+Warning message:
+In png(tempfile()) : unable to open connection to X11 display ''

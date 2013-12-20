@@ -211,18 +211,55 @@ idx <- seq_len(length(covdata.used))
 myGEE <- function(i, corstr) {
 	geeglm(coverage ~ sampleDepth + group + region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
 }
+myGEE.int <- function(i, corstr) {
+	geeglm(coverage ~ sampleDepth + group * region, id = sample, data = covdata.used[[i]], family = gaussian, corstr = corstr)
+}
 
 ## GEE AR1
 if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1"))
 </pre></div>
-<div class="message"><pre class="knitr r">## 2013-12-14 18:10:06 running GEE with AR1
+<div class="message"><pre class="knitr r">## 2013-12-20 09:43:14 running GEE with AR1
 </pre></div>
 <div class="source"><pre class="knitr r">geeAR1 <- mclapply(idx, myGEE, corstr="ar1", mc.cores=20)
 names(geeAR1) <- names(covdata.used)[idx]
 save(geeAR1, file=file.path(wdir, "geeAR1.Rdata"))
 
+## GEE AR1 - int
+if(opt$verbose) message(paste(Sys.time(), "running GEE with AR1 - interaction"))
+</pre></div>
+<div class="message"><pre class="knitr r">## 2013-12-20 09:47:22 running GEE with AR1 - interaction
+</pre></div>
+<div class="source"><pre class="knitr r">geeAR1.int <- mclapply(idx, myGEE.int, corstr="ar1", mc.cores=20)
+names(geeAR1.int) <- names(covdata.used)[idx]
+save(geeAR1.int, file=file.path(wdir, "geeAR1.int.Rdata"))
+
 ## Show an example:
-summary(geeAR1[[1]])
+geeAR1[[1]]
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group + region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+## Coefficients:
+##   (Intercept)   sampleDepth       groupCO     groupETOH regionregionM 
+##      -5.27214       0.40678      -0.79260      -0.48633       0.04106 
+## regionregion2 
+##       0.07207 
+## 
+## Degrees of Freedom: 3525 Total (i.e. Null);  3519 Residual
+## 
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 0.1797
+## 
+## Correlation:  Structure = ar1    Link = identity 
+## Estimated Correlation Parameters:
+##  alpha 
+## 0.9785 
+## 
+## Number of clusters:   25   Maximum cluster size: 141
+</pre></div>
+<div class="source"><pre class="knitr r">summary(geeAR1[[1]])
 </pre></div>
 <div class="output"><pre class="knitr r">## 
 ## Call:
@@ -251,8 +288,69 @@ summary(geeAR1[[1]])
 ## alpha    0.979 0.00477
 ## Number of clusters:   25   Maximum cluster size: 141
 </pre></div>
+<div class="source"><pre class="knitr r">geeAR1.int[[1]]
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group * region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+## Coefficients:
+##             (Intercept)             sampleDepth                 groupCO 
+##                -5.28438                 0.40679                -0.76827 
+##               groupETOH           regionregionM           regionregion2 
+##                -0.47566                 0.05304                 0.09359 
+##   groupCO:regionregionM groupETOH:regionregionM   groupCO:regionregion2 
+##                -0.02495                -0.00946                -0.04178 
+## groupETOH:regionregion2 
+##                -0.02051 
+## 
+## Degrees of Freedom: 3525 Total (i.e. Null);  3515 Residual
+## 
+## Scale Link:                   identity
+## Estimated Scale Parameters:  [1] 0.179
+## 
+## Correlation:  Structure = ar1    Link = identity 
+## Estimated Correlation Parameters:
+## alpha 
+## 0.979 
+## 
+## Number of clusters:   25   Maximum cluster size: 141
+</pre></div>
+<div class="source"><pre class="knitr r">summary(geeAR1.int[[1]])
+</pre></div>
+<div class="output"><pre class="knitr r">## 
+## Call:
+## geeglm(formula = coverage ~ sampleDepth + group * region, family = gaussian, 
+##     data = covdata.used[[i]], id = sample, corstr = corstr)
+## 
+##  Coefficients:
+##                         Estimate  Std.err  Wald Pr(>|W|)    
+## (Intercept)             -5.28438  3.28335  2.59  0.10752    
+## sampleDepth              0.40679  0.11584 12.33  0.00045 ***
+## groupCO                 -0.76827  0.13802 30.98  2.6e-08 ***
+## groupETOH               -0.47566  0.13649 12.14  0.00049 ***
+## regionregionM            0.05304  0.01308 16.44  5.0e-05 ***
+## regionregion2            0.09359  0.01197 61.14  5.3e-15 ***
+## groupCO:regionregionM   -0.02495  0.01621  2.37  0.12375    
+## groupETOH:regionregionM -0.00946  0.01757  0.29  0.59014    
+## groupCO:regionregion2   -0.04178  0.01969  4.50  0.03383 *  
+## groupETOH:regionregion2 -0.02051  0.01918  1.14  0.28489    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Estimated Scale Parameters:
+##             Estimate Std.err
+## (Intercept)    0.179  0.0309
+## 
+## Correlation: Structure = ar1  Link = identity 
+## 
+## Estimated Correlation Parameters:
+##       Estimate Std.err
+## alpha    0.979 0.00478
+## Number of clusters:   25   Maximum cluster size: 141
+</pre></div>
 <div class="source"><pre class="knitr r">
-
 ## Extract region2 coef estimate, st.error, and Wald stat
 myGEE.stat <- function(y) {
 	beta <- c(coef(y)["regionregion2"], y$geese$alpha)
@@ -267,12 +365,36 @@ myGEE.stat <- function(y) {
 geeAR1.stat <- lapply(geeAR1, myGEE.stat)
 save(geeAR1.stat, file=file.path(wdir, "geeAR1.stat.Rdata"))
 
+## Extract region2 coef estimate, interaction coef estiamtes, st.error, and Wald stat
+myGEE.int.stat <- function(y) {
+	beta <- c(coef(y)[c("regionregion2", "groupCO:regionregion2", "groupETOH:regionregion2")], y$geese$alpha)
+	## Assumes that geeglm(std.err="san.se") which is the default value
+	vbeta <- sqrt(c(y$geese$vbeta[6, 6], y$geese$vbeta[9, 9], y$geese$vbeta[10, 10], y$geese$valpha))
+	wald <- (beta/vbeta)^2
+	pval <- 1 - pchisq(wald, df=1)
+	df <- data.frame(coef=c("region2", "alpha", "groupCO:region2", "groupETOH:region2"), estimate=beta, stderr=vbeta, wald=wald, pval=pval)
+	rownames(df) <- seq_len(nrow(df))
+	return(df)
+}
+
+geeAR1.int.stat <- lapply(geeAR1.int, myGEE.int.stat)
+save(geeAR1.int.stat, file=file.path(wdir, "geeAR1.int.stat.Rdata"))
+
+
 ## Show an example:
 geeAR1.stat[[1]]
 </pre></div>
 <div class="output"><pre class="knitr r">##      coef estimate  stderr    wald     pval
 ## 1 region2   0.0721 0.00901    63.9 1.33e-15
 ## 2   alpha   0.9785 0.00477 42165.7 0.00e+00
+</pre></div>
+<div class="source"><pre class="knitr r">geeAR1.int.stat[[1]]
+</pre></div>
+<div class="output"><pre class="knitr r">##                coef estimate  stderr     wald     pval
+## 1           region2   0.0936 0.01197    61.14 5.33e-15
+## 2             alpha  -0.0418 0.01969     4.50 3.38e-02
+## 3   groupCO:region2  -0.0205 0.01918     1.14 2.85e-01
+## 4 groupETOH:region2   0.9786 0.00478 41849.87 0.00e+00
 </pre></div>
 </div></div>
 
@@ -290,14 +412,14 @@ geeAR1.stat[[1]]
 
 Date the report was generated.
 
-<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-14 18:14:20 EST"
+<div class="chunk" id="reproducibility1"><div class="rcode"><div class="output"><pre class="knitr r">## [1] "2013-12-20 09:51:15 EST"
 </pre></div>
 </div></div>
 
 
 Wallclock time spent generating the report.
 
-<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 4.28 mins
+<div class="chunk" id="reproducibility2"><div class="rcode"><div class="output"><pre class="knitr r">## Time difference of 8.07 mins
 </pre></div>
 </div></div>
 
@@ -322,7 +444,7 @@ Wallclock time spent generating the report.
 ## [1] geepack_1.1-6        knitrBootstrap_0.9.0 getopt_1.20.0       
 ## 
 ## loaded via a namespace (and not attached):
-## [1] Cairo_1.5-3    evaluate_0.5.1 formatR_0.10   knitr_1.5     
+## [1] Cairo_1.5-4    evaluate_0.5.1 formatR_0.10   knitr_1.5     
 ## [5] markdown_0.6.3 stringr_0.6.2  tools_3.0.2
 </pre></div>
 </div></div>
